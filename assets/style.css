@@ -1,8 +1,15 @@
+/* =========================================================
+   UN Women RDC – Agenda Activités
+   Style global (index.html + dashboard.html)
+   Branding: bandeau bleu, accents orange, tableau compact
+   ========================================================= */
+
 :root{
-  /* UN Women branding (proche) */
-  --unw-blue:#00A3E0;          /* bleu bandeau */
+  /* Palette UN Women (approximative, stable) */
+  --unw-blue:#00A3E0;
   --unw-blue-dark:#0077A3;
-  --unw-orange:#F58220;        /* accent */
+  --unw-orange:#F58220;
+
   --bg:#F5F7FB;
   --card:#FFFFFF;
   --text:#111827;
@@ -12,8 +19,8 @@
   --shadow:0 10px 28px rgba(16,24,40,.08);
   --radius:14px;
 
-  /* Table */
-  --table-head:#E9F6FC;        /* fond entête tableau (bleu très clair) */
+  /* Tableau */
+  --table-head:#E9F6FC;
   --table-head-border:#BFE7F7;
   --row-hover:#F9FAFB;
 
@@ -23,7 +30,7 @@
   --warning:#F59E0B;
   --info:#3B82F6;
 
-  /* Typo (compact) */
+  /* Typo compacte */
   --fs-base:13px;
   --fs-small:12px;
   --fs-xs:11px;
@@ -40,24 +47,21 @@ body{
   font-size:var(--fs-base);
 }
 
-/* Layout */
 .container{max-width:1240px;margin:0 auto;padding:16px}
 
 /* =========================
-   Header ONU Femmes (bandeau)
+   Header ONU Femmes (bandeau bleu)
    ========================= */
 .topbar{
   background:linear-gradient(90deg, var(--unw-blue) 0%, var(--unw-blue-dark) 100%);
   color:#fff;
-  border-bottom:1px solid rgba(255,255,255,.15);
+  border-bottom:1px solid rgba(255,255,255,.18);
 }
-.topbar .container{
-  padding:14px 16px;
-}
+.topbar .container{padding:14px 16px}
 .topbar h1{
   margin:0;
   font-size:16px;
-  font-weight:700;
+  font-weight:800;
   letter-spacing:.2px;
 }
 
@@ -82,7 +86,7 @@ body{
   background:#fff;
   color:var(--unw-blue-dark);
   border-color:#fff;
-  font-weight:700;
+  font-weight:800;
 }
 
 /* =========================
@@ -99,7 +103,7 @@ body{
 .card h2{
   margin:0 0 10px;
   font-size:13px;
-  font-weight:800;
+  font-weight:900;
   color:#0B1F2A;
   display:flex;
   align-items:center;
@@ -112,37 +116,49 @@ body{
   display:inline-block;
 }
 
-/* Filters */
-.filters .grid{
-  display:grid;
-  grid-template-columns:repeat(5, 1fr);
-  gap:10px;
-}
+/* =========================
+   Grids
+   ========================= */
+.grid{display:grid;grid-template-columns:repeat(5, 1fr);gap:10px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* =========================
+   Forms / Filters (bords bleu bandeau)
+   ========================= */
 label{
-  display:block;
-  font-size:var(--fs-xs);
-  color:rgba(255,255,255,.0); /* reset for table only? keep normal */
-}
-.filters label{
   display:block;
   font-size:var(--fs-xs);
   color:var(--muted);
   margin-bottom:6px;
 }
-input,select{
+
+.filters input,
+.filters select{
   width:100%;
   padding:9px 10px;
-  border:1px solid var(--border);
+  border:1px solid rgba(0,163,224,.55); /* bleu bandeau */
   border-radius:12px;
   background:#fff;
   font-size:var(--fs-small);
 }
-input:focus,select:focus{
+
+.filters input:focus,
+.filters select:focus{
   outline:none;
-  border-color:rgba(0,163,224,.55);
-  box-shadow:0 0 0 3px rgba(0,163,224,.12);
+  border-color:var(--unw-blue);
+  box-shadow:0 0 0 3px rgba(0,163,224,.18);
 }
 
+/* Petite "tuile" autour de chaque filtre pour un rendu plus net */
+.filters .grid > div{
+  padding:8px;
+  border:1px dashed rgba(0,163,224,.22);
+  border-radius:12px;
+  background:rgba(255,255,255,.65);
+}
+
+/* Zone actions */
 .actions{
   display:flex;
   align-items:center;
@@ -150,36 +166,41 @@ input:focus,select:focus{
   margin-top:10px;
   gap:10px;
 }
+
 .btn{
   padding:9px 12px;
-  border:1px solid var(--border);
+  border:1px solid rgba(0,163,224,.35);
   border-radius:12px;
   background:#fff;
   cursor:pointer;
   font-size:var(--fs-small);
 }
 .btn:hover{
-  border-color:rgba(0,163,224,.35);
+  border-color:rgba(0,163,224,.55);
   box-shadow:0 6px 16px rgba(16,24,40,.06);
 }
+
 .muted{color:var(--muted);font-size:var(--fs-xs)}
 
 /* =========================
    Table (compact + entête colorée)
    ========================= */
 .table-wrap{overflow:auto;border-radius:12px}
+
 table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
-  min-width:1050px; /* assure la lisibilité, scroll horizontal si nécessaire */
+  min-width:1050px;
 }
+
 th,td{
   padding:8px 9px;
   border-bottom:1px solid var(--border);
   vertical-align:top;
   font-size:var(--fs-small);
 }
+
 th{
   position:sticky;
   top:0;
@@ -192,11 +213,28 @@ th{
   text-transform:uppercase;
   color:#0B1F2A;
 }
+
 tbody tr:hover{background:var(--row-hover)}
-.strong{font-weight:800}
+
+/* Colonnes personnalisées demandées */
+td.col-code{
+  color: var(--danger);   /* code en rouge */
+  font-weight:400;        /* NON gras */
+  white-space:nowrap;
+}
+td.col-title{
+  font-weight:900;        /* intitulé mis en évidence */
+  color:#0B1F2A;
+}
+.cell-sub{
+  display:block;
+  font-size:11px;
+  color:var(--muted);
+  margin-top:2px;
+  font-weight:600;
+}
+
 .notes{min-width:260px;white-space:pre-wrap;color:#111827}
-td{color:#111827}
-td:nth-child(1){white-space:nowrap} /* code */
 
 /* Badges */
 .badge{
@@ -213,40 +251,61 @@ td:nth-child(1){white-space:nowrap} /* code */
 .badge--info{border-color:rgba(59,130,246,.55);color:var(--info)}
 
 /* =========================
-   Dashboard KPIs (modern + compact)
+   Progress bar (%) – barre horizontale
    ========================= */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.progress{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:160px;
+}
+.progress-track{
+  flex:1;
+  height:10px;
+  border-radius:999px;
+  background:#EEF2F7;
+  border:1px solid rgba(17,24,39,.08);
+  overflow:hidden;
+}
+.progress-bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg, var(--unw-blue) 0%, var(--unw-orange) 100%);
+  border-radius:999px;
+}
+.progress-val{
+  font-size:11px;
+  color:var(--muted);
+  width:42px;
+  text-align:right;
+}
+.progress--empty .progress-bar{width:0%}
 
+/* =========================
+   Dashboard (KPIs + charts) – tailles réduites
+   ========================= */
 .kpi{
   padding:12px;
-  border-left:6px solid rgba(245,130,32,.85); /* accent orange */
-}
-.kpi .muted{
-  font-size:var(--fs-xs);
+  border-left:6px solid rgba(245,130,32,.88); /* accent orange */
 }
 .kpiVal{
   font-size:22px;
-  font-weight:900;
+  font-weight:950;
   margin-top:6px;
   letter-spacing:.2px;
 }
 
-/* Charts: hauteur réduite pour vue optimale */
-canvas{
-  width:100%;
-  height:280px;
-}
-.card.chart canvas{
-  height:300px;
-}
+canvas{width:100%;height:280px}
+.card.chart canvas{height:300px}
 
-/* Responsive */
+/* =========================
+   Responsive
+   ========================= */
 @media (max-width: 1100px){
-  .filters .grid{grid-template-columns:1fr 1fr 1fr}
+  .grid{grid-template-columns:1fr 1fr 1fr}
 }
 @media (max-width: 900px){
-  .filters .grid{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr 1fr}
   .grid-2{grid-template-columns:1fr}
   .grid-4{grid-template-columns:1fr 1fr}
   canvas{height:260px}
