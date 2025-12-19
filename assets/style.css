@@ -1,11 +1,14 @@
 /* =========================================================
-   UN Women RDC – Agenda Activités
-   Style global (index.html + dashboard.html)
-   Branding: bandeau bleu, accents orange, tableau compact
+   UN Women RDC – Agenda Activités (index + dashboard)
+   Branding: bandeau bleu, accents orange
+   Inclus:
+   - Code activité rouge non gras + Intitulé mis en évidence
+   - Barre horizontale % avancement
+   - CSS "Top activités à risque" (riskTbl)
    ========================================================= */
 
 :root{
-  /* Palette UN Women (approximative, stable) */
+  /* Palette UN Women (approximative) */
   --unw-blue:#00A3E0;
   --unw-blue-dark:#0077A3;
   --unw-orange:#F58220;
@@ -38,6 +41,7 @@
 
 *{box-sizing:border-box}
 html,body{height:100%}
+
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
@@ -65,7 +69,7 @@ body{
   letter-spacing:.2px;
 }
 
-/* Nav pills */
+/* Nav */
 .nav{
   margin-top:10px;
   display:flex;
@@ -150,7 +154,7 @@ label{
   box-shadow:0 0 0 3px rgba(0,163,224,.18);
 }
 
-/* Petite "tuile" autour de chaque filtre pour un rendu plus net */
+/* Tuile autour de chaque filtre */
 .filters .grid > div{
   padding:8px;
   border:1px dashed rgba(0,163,224,.22);
@@ -158,7 +162,7 @@ label{
   background:rgba(255,255,255,.65);
 }
 
-/* Zone actions */
+/* Actions */
 .actions{
   display:flex;
   align-items:center;
@@ -166,7 +170,6 @@ label{
   margin-top:10px;
   gap:10px;
 }
-
 .btn{
   padding:9px 12px;
   border:1px solid rgba(0,163,224,.35);
@@ -179,7 +182,6 @@ label{
   border-color:rgba(0,163,224,.55);
   box-shadow:0 6px 16px rgba(16,24,40,.06);
 }
-
 .muted{color:var(--muted);font-size:var(--fs-xs)}
 
 /* =========================
@@ -216,14 +218,18 @@ th{
 
 tbody tr:hover{background:var(--row-hover)}
 
-/* Colonnes personnalisées demandées */
+.notes{min-width:260px;white-space:pre-wrap;color:#111827}
+
+/* =========================
+   Code activité (rouge, non gras) + Intitulé mis en évidence
+   ========================= */
 td.col-code{
-  color: var(--danger);   /* code en rouge */
-  font-weight:400;        /* NON gras */
+  color: var(--danger);
+  font-weight:400;       /* non gras */
   white-space:nowrap;
 }
 td.col-title{
-  font-weight:900;        /* intitulé mis en évidence */
+  font-weight:900;       /* titre mis en évidence */
   color:#0B1F2A;
 }
 .cell-sub{
@@ -234,9 +240,9 @@ td.col-title{
   font-weight:600;
 }
 
-.notes{min-width:260px;white-space:pre-wrap;color:#111827}
-
-/* Badges */
+/* =========================
+   Badges
+   ========================= */
 .badge{
   display:inline-block;
   padding:3px 9px;
@@ -251,7 +257,7 @@ td.col-title{
 .badge--info{border-color:rgba(59,130,246,.55);color:var(--info)}
 
 /* =========================
-   Progress bar (%) – barre horizontale
+   Barre horizontale (%) – avancement
    ========================= */
 .progress{
   display:flex;
@@ -282,11 +288,11 @@ td.col-title{
 .progress--empty .progress-bar{width:0%}
 
 /* =========================
-   Dashboard (KPIs + charts) – tailles réduites
+   Dashboard (KPIs + charts)
    ========================= */
 .kpi{
   padding:12px;
-  border-left:6px solid rgba(245,130,32,.88); /* accent orange */
+  border-left:6px solid rgba(245,130,32,.88);
 }
 .kpiVal{
   font-size:22px;
@@ -295,8 +301,37 @@ td.col-title{
   letter-spacing:.2px;
 }
 
+/* Charts (hauteur optimisée) */
 canvas{width:100%;height:280px}
 .card.chart canvas{height:300px}
+
+/* =========================
+   Top activités à risque (riskTbl)
+   ========================= */
+#riskTbl{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:900px;
+}
+#riskTbl th, #riskTbl td{
+  padding:8px 9px;
+  font-size:12px;
+  border-bottom:1px solid var(--border);
+}
+#riskTbl th{
+  background:var(--table-head);
+  border-bottom:1px solid var(--table-head-border);
+  text-transform:uppercase;
+  letter-spacing:.2px;
+  font-size:11px;
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+#riskTbl tbody tr:hover{background:var(--row-hover)}
+#riskTbl td.col-code{ color: var(--danger); font-weight:400; }
+#riskTbl td.col-title{ font-weight:900; }
 
 /* =========================
    Responsive
