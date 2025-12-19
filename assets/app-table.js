@@ -116,70 +116,72 @@
   // 6) Rendu tableau (VISUEL AMÉLIORÉ)
   // =====================================================
   function render(rows) {
-    const sorted = rows.slice().sort((a, b) => {
-      if (a.date_debut !== b.date_debut) return (a.date_debut || "").localeCompare(b.date_debut || "");
-      return (a.code_activite || "").localeCompare(b.code_activite || "");
-    });
+  const sorted = rows.slice().sort((a, b) => {
+    if (a.date_debut !== b.date_debut) {
+      return (a.date_debut || "").localeCompare(b.date_debut || "");
+    }
+    return (a.code_activite || "").localeCompare(b.code_activite || "");
+  });
 
-    tbody.innerHTML = sorted.map(r => {
-      const overdueClass = isOverdue(r) ? " badge--danger" : "";
-      const maj = r.date_mise_a_jour || r.submission_time || "";
+  tbody.innerHTML = sorted.map(r => {
+    const overdueClass = isOverdue(r) ? " badge--danger" : "";
+    const maj = r.date_mise_a_jour || r.submission_time || "";
 
-      // Progress bar %
-      let progressHTML = `
-        <div class="progress progress--empty">
+    // Progress bar %
+    let progressHTML = `
+      <div class="progress progress--empty">
+        <div class="progress-track">
+          <div class="progress-bar" style="width:0%"></div>
+        </div>
+        <div class="progress-val">—</div>
+      </div>`;
+
+    if (typeof r.avancement_pct === "number" && !Number.isNaN(r.avancement_pct)) {
+      const pct = Math.max(0, Math.min(100, Math.round(r.avancement_pct)));
+      progressHTML = `
+        <div class="progress">
           <div class="progress-track">
-            <div class="progress-bar" style="width:0%"></div>
+            <div class="progress-bar" style="width:${pct}%"></div>
           </div>
-          <div class="progress-val">—</div>
+          <div class="progress-val">${pct}%</div>
         </div>`;
+    }
 
-      if (typeof r.avancement_pct === "number" && !Number.isNaN(r.avancement_pct)) {
-        const pct = Math.max(0, Math.min(100, Math.round(r.avancement_pct)));
-        progressHTML = `
-          <div class="progress">
-            <div class="progress-track">
-              <div class="progress-bar" style="width:${pct}%"></div>
-            </div>
-            <div class="progress-val">${pct}%</div>
-          </div>`;
-      }
+    return `
+      <tr>
+        <!-- Code activité (rouge, non gras) -->
+        <td class="col-code">${esc(r.code_activite || "")}</td>
 
-      return `
-        <tr>
-          <!-- Code activité en rouge -->
-          <td class="col-code">${esc(r.code_activite || "")}</td>
+        <!-- Intitulé mis en valeur -->
+        <td class="col-title">
+          ${esc(r.titre || "")}
+          <span class="cell-sub">
+            ${esc(r.type_activite || "")} • ${esc(r.bureau || "")} • ${esc(r.pilier || "")}
+          </span>
+        </td>
 
-          <!-- Intitulé mis en valeur -->
-          <td class="col-title">
-            ${esc(r.titre || "")}
-            <span class="cell-sub">
-              ${esc(r.type_activite || "")} • ${esc(r.bureau || "")} • ${esc(r.pilier || "")}
-            </span>
-          </td>
+        <td>${esc((r.unites_impliquees || []).join("; "))}</td>
+        <td>${esc(r.date_debut || "")}</td>
+        <td>${esc(r.date_fin || "")}</td>
 
-          <td>${esc((r.unites_impliquees || []).join("; "))}</td>
-          <td>${esc(r.date_debut || "")}</td>
-          <td>${esc(r.date_fin || "")}</td>
+        <td>
+          <span class="badge${overdueClass}">
+            ${esc(r.statut_planificateur || "")}
+          </span>
+        </td>
 
-          <td>
-            <span class="badge${overdueClass}">
-              ${esc(r.statut_planificateur || "")}
-            </span>
-          </td>
+        <td>${esc(r.statut_suivi || "")}</td>
 
-          <td>${esc(r.statut_suivi || "")}</td>
+        <!-- ✅ COLONNE % CORRECTEMENT ALIGNÉE -->
+        <td class="col-pct">${progressHTML}</td>
 
-          <!-- Barre horizontale % -->
-          <td>${progressHTML}</td>
-
-          <td class="notes">${esc(r.commentaire_suivi || "")}</td>
-          <td>${esc(r.validation || "")}</td>
-          <td>${esc(maj)}</td>
-        </tr>
-      `;
-    }).join("");
-  }
+        <td class="notes">${esc(r.commentaire_suivi || "")}</td>
+        <td>${esc(r.validation || "")}</td>
+        <td>${esc(maj)}</td>
+      </tr>
+    `;
+  }).join("");
+}
 
   // =====================================================
   // 7) Events
