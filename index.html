@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agenda – Activités planifiées</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container">
+      <h1>Activités planifiées</h1>
+      <nav class="nav">
+        <a class="active" href="./index.html">Tableau</a>
+        <a href="./dashboard.html">Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="filters card">
+      <div class="grid">
+        <div>
+          <label>Recherche</label>
+          <input id="q" type="search" placeholder="activité, responsable, province, notes..." />
+        </div>
+        <div>
+          <label>Pilier</label>
+          <select id="pilier"></select>
+        </div>
+        <div>
+          <label>Statut</label>
+          <select id="statut"></select>
+        </div>
+        <div>
+          <label>Période (début)</label>
+          <input id="from" type="date" />
+        </div>
+        <div>
+          <label>Période (fin)</label>
+          <input id="to" type="date" />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="reset" class="btn">Réinitialiser</button>
+        <span id="meta" class="muted"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="table-wrap">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th>Activité</th>
+              <th>Pilier</th>
+              <th>Responsable</th>
+              <th>Province/Zone</th>
+              <th>Début</th>
+              <th>Échéance</th>
+              <th>Statut</th>
+              <th>Notes de suivi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/utils.js"></script>
+  <script src="assets/app-table.js"></script>
+</body>
+</html>
