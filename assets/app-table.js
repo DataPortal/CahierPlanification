@@ -1,7 +1,9 @@
 (async function () {
+  // 1) Charger Kobo (brut) depuis le repo
   const raw = await fetch("./data/submissions.json", { cache: "no-store" }).then(r => r.json());
-  const data = (raw && raw.results) ? raw.results : raw; // au cas où
+  const data = (raw && raw.results) ? raw.results : raw;
 
+  // 2) DOM
   const elQ = document.getElementById("q");
   const elPilier = document.getElementById("pilier");
   const elBureau = document.getElementById("bureau");
@@ -14,13 +16,32 @@
   const elMeta = document.getElementById("meta");
   const tbody = document.querySelector("#tbl tbody");
 
-  // Utilitaires locaux (au cas où utils.js n'est pas chargé correctement)
-  const esc = (v) => (v == null ? "" : String(v))
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-  const uniq = (arr) => Array.from(new Set(arr.filter(Boolean).map(x => String(x).trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  // 3) Utils locales (indépendant de utils.js)
+  const esc = (v) =>
+    (v == null ? "" : String(v))
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
 
-  function units(r){
+  const uniq = (arr) =>
+    Array.from(
+      new Set(
+        arr
+          .filter(v => v !== null && v !== undefined)
+          .map(v => String(v).trim())
+          .filter(v => v !== "")
+      )
+    ).sort((a, b) => a.localeCompare(b));
+
+  function fillSelect(select, values, placeholder) {
+    select.innerHTML =
+      `<option value="">${esc(placeholder)}</option>` +
+      values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+  }
+
+  function units(r) {
     const txt = (r["Autres unités impliquées (si applicable)"] || "").toString().trim();
     const flags = [];
 
@@ -46,28 +67,29 @@
     return out.join("; ");
   }
 
-  function fillSelect(select, values, placeholder){
-    select.innerHTML = `<option value="">${esc(placeholder)}</option>` + values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+  function isOverdue(r) {
+    const fin = (r["Date de fin"] || "").toString().trim();
+    if (!fin) return false;
+
+    const end = new Date(fin);
+    if (isNaN(end.getTime())) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const status = ((r["Statut de suivi"] || r["Statut (planificateur)"] || "") + "").toLowerCase();
+    const done = ["clôt", "clot", "termin", "achev", "done", "completed"].some(s => status.includes(s));
+
+    return end < today && !done;
   }
 
-  // Remplir filtres depuis champs Kobo (bruts)
+  // 4) Filtres
   fillSelect(elPilier, uniq(data.map(d => d["Pilier ONU Femmes"])), "Tous les piliers");
   fillSelect(elBureau, uniq(data.map(d => d["Bureau ONU Femmes (RDC)"])), "Tous les bureaux");
   fillSelect(elStatutPlanif, uniq(data.map(d => d["Statut (planificateur)"])), "Tous statuts (planif)");
   fillSelect(elStatutSuivi, uniq(data.map(d => d["Statut de suivi"])), "Tous statuts (suivi)");
 
-  function isOverdue(r){
-    const fin = (r["Date de fin"] || "").toString().trim();
-    if (!fin) return false;
-    const end = new Date(fin);
-    if (isNaN(end.getTime())) return false;
-
-    const today = new Date(); today.setHours(0,0,0,0);
-    const status = ((r["Statut de suivi"] || r["Statut (planificateur)"] || "") + "").toLowerCase();
-    const done = ["clôt","clot","termin","achev","done","completed"].some(s => status.includes(s));
-    return end < today && !done;
-  }
-
+  // 5) Filtrage + rendu
   function apply() {
     const q = (elQ.value || "").toLowerCase().trim();
     const pilier = elPilier.value || "";
@@ -99,6 +121,7 @@
         r["Type d’activité"],
         r["Pilier ONU Femmes"],
         r["Bureau ONU Femmes (RDC)"],
+        units(r),
         r["Statut (planificateur)"],
         r["Statut de suivi"],
         r["Commentaire de suivi"],
@@ -114,7 +137,15 @@
   }
 
   function render(rows) {
-    tbody.innerHTML = rows.map(r => {
+    // tri par date début puis code activité
+    const sorted = rows.slice().sort((a, b) => {
+      const da = (a["Date de début"] || "").toString();
+      const db = (b["Date de début"] || "").toString();
+      if (da !== db) return da.localeCompare(db);
+      return ((a["code_activite"] || "") + "").localeCompare((b["code_activite"] || "") + "");
+    });
+
+    tbody.innerHTML = sorted.map(r => {
       const maj = r["date_mise_a_jour"] || r["_submission_time"] || "";
       const overdueClass = isOverdue(r) ? " badge--danger" : "";
 
@@ -133,12 +164,13 @@
           <td>${esc(r["Niveau d’avancement (%)"] || "")}</td>
           <td class="notes">${esc(r["Commentaire de suivi"] || "")}</td>
           <td>${esc(r["Validation"] || "")}</td>
-          <td>${esc(maj || "")}</td>
+          <td>${esc(maj)}</td>
         </tr>
       `;
     }).join("");
   }
 
+  // 6) Events
   [elQ, elPilier, elBureau, elStatutPlanif, elStatutSuivi, elFrom, elTo, elScope].forEach(el => {
     el.addEventListener("input", apply);
     el.addEventListener("change", apply);
