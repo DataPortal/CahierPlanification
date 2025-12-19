@@ -36,11 +36,11 @@
   // =====================================================
   const esc = (v) =>
     (v == null ? "" : String(v))
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
 
   const uniq = (arr) =>
     Array.from(new Set(arr.filter(Boolean).map(v => String(v).trim()).filter(Boolean)))
@@ -57,7 +57,7 @@
   }
 
   // =====================================================
-  // 4) Filtres (depuis activities.json)
+  // 4) Filtres
   // =====================================================
   fillSelect(elPilier, uniq(data.map(d => d.pilier)), "Tous les piliers");
   fillSelect(elBureau, uniq(data.map(d => d.bureau)), "Tous les bureaux");
@@ -113,7 +113,7 @@
   }
 
   // =====================================================
-  // 6) Rendu tableau
+  // 6) Rendu tableau (VISUEL AMÉLIORÉ)
   // =====================================================
   function render(rows) {
     const sorted = rows.slice().sort((a, b) => {
@@ -125,21 +125,56 @@
       const overdueClass = isOverdue(r) ? " badge--danger" : "";
       const maj = r.date_mise_a_jour || r.submission_time || "";
 
+      // Progress bar %
+      let progressHTML = `
+        <div class="progress progress--empty">
+          <div class="progress-track">
+            <div class="progress-bar" style="width:0%"></div>
+          </div>
+          <div class="progress-val">—</div>
+        </div>`;
+
+      if (typeof r.avancement_pct === "number" && !Number.isNaN(r.avancement_pct)) {
+        const pct = Math.max(0, Math.min(100, Math.round(r.avancement_pct)));
+        progressHTML = `
+          <div class="progress">
+            <div class="progress-track">
+              <div class="progress-bar" style="width:${pct}%"></div>
+            </div>
+            <div class="progress-val">${pct}%</div>
+          </div>`;
+      }
+
       return `
         <tr>
-          <td class="strong">${esc(r.code_activite)}</td>
-          <td class="strong">${esc(r.titre)}</td>
-          <td>${esc(r.type_activite)}</td>
-          <td>${esc(r.pilier)}</td>
-          <td>${esc(r.bureau)}</td>
+          <!-- Code activité en rouge -->
+          <td class="col-code">${esc(r.code_activite || "")}</td>
+
+          <!-- Intitulé mis en valeur -->
+          <td class="col-title">
+            ${esc(r.titre || "")}
+            <span class="cell-sub">
+              ${esc(r.type_activite || "")} • ${esc(r.bureau || "")} • ${esc(r.pilier || "")}
+            </span>
+          </td>
+
           <td>${esc((r.unites_impliquees || []).join("; "))}</td>
-          <td>${esc(r.date_debut)}</td>
-          <td>${esc(r.date_fin)}</td>
-          <td><span class="badge${overdueClass}">${esc(r.statut_planificateur)}</span></td>
-          <td>${esc(r.statut_suivi)}</td>
-          <td>${esc(r.avancement_pct ?? "")}</td>
-          <td class="notes">${esc(r.commentaire_suivi)}</td>
-          <td>${esc(r.validation)}</td>
+          <td>${esc(r.date_debut || "")}</td>
+          <td>${esc(r.date_fin || "")}</td>
+
+          <td>
+            <span class="badge${overdueClass}">
+              ${esc(r.statut_planificateur || "")}
+            </span>
+          </td>
+
+          <td>${esc(r.statut_suivi || "")}</td>
+
+          <!-- Barre horizontale % -->
+          <td>${progressHTML}</td>
+
+          <td class="notes">${esc(r.commentaire_suivi || "")}</td>
+          <td>${esc(r.validation || "")}</td>
           <td>${esc(maj)}</td>
         </tr>
       `;
