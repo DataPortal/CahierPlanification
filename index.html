@@ -4,19 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Agenda – Activités planifiées</title>
-
-  <!-- Recommandé: réduire les soucis de cache côté Pages -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
   <link rel="stylesheet" href="assets/style.css" />
 </head>
-
 <body>
   <header class="topbar">
     <div class="container">
-      <h1>Activités planifiées & suivi</h1>
+      <h1>Agenda des activités – ONU Femmes RDC</h1>
       <nav class="nav">
         <a class="active" href="./index.html">Tableau</a>
         <a href="./dashboard.html">Dashboard</a>
@@ -26,6 +19,8 @@
 
   <main class="container">
     <section class="filters card">
+      <h2>Filtres & recherche</h2>
+
       <div class="grid">
         <div>
           <label>Recherche</label>
@@ -49,7 +44,7 @@
         </div>
       </div>
 
-      <div class="grid" style="margin-top:12px">
+      <div class="grid" style="margin-top:10px">
         <div>
           <label>Début (du)</label>
           <input id="from" type="date" />
@@ -66,15 +61,15 @@
             <option value="withFollowup">Avec commentaire de suivi</option>
           </select>
         </div>
-      </div>
-
-      <div class="actions">
-        <button id="reset" class="btn" type="button">Réinitialiser</button>
-        <span id="meta" class="muted"></span>
+        <div class="actions" style="grid-column: span 2;">
+          <button id="reset" class="btn">Réinitialiser</button>
+          <span id="meta" class="muted"></span>
+        </div>
       </div>
     </section>
 
     <section class="card">
+      <h2>Activités planifiées & suivi</h2>
       <div class="table-wrap">
         <table id="tbl">
           <thead>
@@ -101,9 +96,7 @@
     </section>
   </main>
 
-  <!-- utils.js est optionnel si app-table.js est autonome,
-       mais le garder ne pose aucun problème -->
-  <script src="assets/utils.js" defer></script>
-  <script src="assets/app-table.js" defer></script>
+  <script src="assets/utils.js"></script>
+  <script src="assets/app-table.js"></script>
 </body>
 </html>
