@@ -9,7 +9,7 @@
 <body>
   <header class="topbar">
     <div class="container">
-      <h1>Activités planifiées</h1>
+      <h1>Activités planifiées & suivi</h1>
       <nav class="nav">
         <a class="active" href="./index.html">Tableau</a>
         <a href="./dashboard.html">Dashboard</a>
@@ -22,25 +22,45 @@
       <div class="grid">
         <div>
           <label>Recherche</label>
-          <input id="q" type="search" placeholder="activité, responsable, province, notes..." />
+          <input id="q" type="search" placeholder="code, titre, bureau, pilier, suivi..." />
         </div>
         <div>
           <label>Pilier</label>
           <select id="pilier"></select>
         </div>
         <div>
-          <label>Statut</label>
-          <select id="statut"></select>
+          <label>Bureau</label>
+          <select id="bureau"></select>
         </div>
         <div>
-          <label>Période (début)</label>
+          <label>Statut (planif)</label>
+          <select id="statutPlanif"></select>
+        </div>
+        <div>
+          <label>Statut (suivi)</label>
+          <select id="statutSuivi"></select>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <label>Début (du)</label>
           <input id="from" type="date" />
         </div>
         <div>
-          <label>Période (fin)</label>
+          <label>Début (au)</label>
           <input id="to" type="date" />
         </div>
+        <div>
+          <label>Afficher</label>
+          <select id="scope">
+            <option value="all">Tout</option>
+            <option value="overdue">En retard</option>
+            <option value="withFollowup">Avec commentaire de suivi</option>
+          </select>
+        </div>
       </div>
+
       <div class="actions">
         <button id="reset" class="btn">Réinitialiser</button>
         <span id="meta" class="muted"></span>
@@ -52,14 +72,20 @@
         <table id="tbl">
           <thead>
             <tr>
+              <th>Code</th>
               <th>Activité</th>
+              <th>Type</th>
               <th>Pilier</th>
-              <th>Responsable</th>
-              <th>Province/Zone</th>
+              <th>Bureau</th>
+              <th>Unités</th>
               <th>Début</th>
-              <th>Échéance</th>
-              <th>Statut</th>
-              <th>Notes de suivi</th>
+              <th>Fin</th>
+              <th>Statut planif</th>
+              <th>Statut suivi</th>
+              <th>%</th>
+              <th>Commentaire de suivi</th>
+              <th>Validation</th>
+              <th>Maj</th>
             </tr>
           </thead>
           <tbody></tbody>
