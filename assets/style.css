@@ -2,8 +2,9 @@
    UN Women RDC – Agenda Activités (index + dashboard)
    Branding: bandeau bleu, accents orange
    Inclus:
+   - Alignement strict du tableau principal (#tbl)
    - Code activité rouge non gras + Intitulé mis en évidence
-   - Barre horizontale % avancement
+   - Barre horizontale % avancement (colonne % alignée)
    - CSS "Top activités à risque" (riskTbl)
    ========================================================= */
 
@@ -141,7 +142,7 @@ label{
 .filters select{
   width:100%;
   padding:9px 10px;
-  border:1px solid rgba(0,163,224,.55); /* bleu bandeau */
+  border:1px solid rgba(0,163,224,.55);
   border-radius:12px;
   background:#fff;
   font-size:var(--fs-small);
@@ -185,7 +186,7 @@ label{
 .muted{color:var(--muted);font-size:var(--fs-xs)}
 
 /* =========================
-   Table (compact + entête colorée)
+   Table (commun)
    ========================= */
 .table-wrap{overflow:auto;border-radius:12px}
 
@@ -225,11 +226,11 @@ tbody tr:hover{background:var(--row-hover)}
    ========================= */
 td.col-code{
   color: var(--danger);
-  font-weight:400;       /* non gras */
+  font-weight:400;
   white-space:nowrap;
 }
 td.col-title{
-  font-weight:900;       /* titre mis en évidence */
+  font-weight:900;
   color:#0B1F2A;
 }
 .cell-sub{
@@ -263,7 +264,6 @@ td.col-title{
   display:flex;
   align-items:center;
   gap:8px;
-  min-width:160px;
 }
 .progress-track{
   flex:1;
@@ -286,6 +286,34 @@ td.col-title{
   text-align:right;
 }
 .progress--empty .progress-bar{width:0%}
+
+/* =========================================================
+   ===== Alignement strict des colonnes (table principal) =====
+   IMPORTANT: nécessite th.th-code / th.th-title / th.th-pct
+   + td.col-code / td.col-title / td.col-pct
+   ========================================================= */
+#tbl{
+  table-layout: fixed; /* clé pour aligner entêtes et cellules */
+}
+
+/* Largeurs stables */
+#tbl th.th-code, #tbl td.col-code{ width: 190px; }
+#tbl th.th-title, #tbl td.col-title{ width: 360px; }
+#tbl th.th-pct, #tbl td.col-pct{ width: 210px; }
+
+/* Empêche le débordement qui casse l’alignement */
+#tbl td, #tbl th{
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Colonne % : alignement visuel */
+#tbl th.th-pct{ text-align:left; }
+#tbl td.col-pct{ vertical-align: middle; }
+
+/* Progress bar : ne doit jamais dépasser la colonne % */
+#tbl td.col-pct .progress{ min-width: 0; width:100%; }
+#tbl td.col-pct .progress-track{ width:100%; }
 
 /* =========================
    Dashboard (KPIs + charts)
@@ -330,7 +358,7 @@ canvas{width:100%;height:280px}
   z-index:2;
 }
 #riskTbl tbody tr:hover{background:var(--row-hover)}
-#riskTbl td.col-code{ color: var(--danger); font-weight:400; }
+#riskTbl td.col-code{ color: var(--danger); font-weight:400; white-space:nowrap; }
 #riskTbl td.col-title{ font-weight:900; }
 
 /* =========================
