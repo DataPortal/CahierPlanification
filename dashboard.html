@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard – Activités</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container">
+      <h1>Dashboard – tendances</h1>
+      <nav class="nav">
+        <a href="./index.html">Tableau</a>
+        <a class="active" href="./dashboard.html">Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="kpis grid-4">
+      <div class="card kpi"><div class="muted">Total</div><div id="kpi_total" class="kpiVal">—</div></div>
+      <div class="card kpi"><div class="muted">Planifiées</div><div id="kpi_planned" class="kpiVal">—</div></div>
+      <div class="card kpi"><div class="muted">En cours</div><div id="kpi_ongoing" class="kpiVal">—</div></div>
+      <div class="card kpi"><div class="muted">Clôturées</div><div id="kpi_done" class="kpiVal">—</div></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h2>Répartition par pilier</h2>
+        <canvas id="byPilier"></canvas>
+      </div>
+      <div class="card">
+        <h2>Répartition par statut</h2>
+        <canvas id="byStatus"></canvas>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Tendance mensuelle (nombre d’activités par mois de début)</h2>
+      <canvas id="trend"></canvas>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="assets/utils.js"></script>
+  <script src="assets/app-dashboard.js"></script>
+</body>
+</html>
