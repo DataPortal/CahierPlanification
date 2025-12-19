@@ -1,1 +1,44 @@
-
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "_id": 634052820,
+      "formhub/uuid": "603c7a8169fa45d98c81452acd7eace5",
+      "start": "2025-12-19T14:31:31.526+01:00",
+      "end": "2025-12-19T14:32:50.622+01:00",
+      "_year": "2025",
+      "grp_planif/code_activite": "UNW-DRC-2025-HUM-bbc",
+      "grp_planif/activite_titre": "Planification de mission",
+      "grp_planif/type_activite": "Mission",
+      "grp_planif/pilier": "HUM",
+      "grp_planif/bureau": "KINSHASA",
+      "grp_planif/autres_unites": "Programme Procurement",
+      "grp_planif/date_debut": "2025-12-17",
+      "grp_planif/date_fin": "2025-12-19",
+      "grp_planif/statut_planif": "Planifiee",
+      "code_suivi_pf": "minsup",
+      "_unlock_suivi": "true",
+      "grp_suivi/statut_suivi": "Planifiee",
+      "grp_suivi/commentaire_suivi": "Mission planifiee",
+      "grp_suivi/date_mise_a_jour": "2025-12-19T14:31:31.568+01:00",
+      "__version__": "vSA74JExmFLpyckAgTfdbT",
+      "meta/instanceID": "uuid:ee88d3b0-4297-4c88-acd8-0a8868c97c19",
+      "_xform_id_string": "aa3qCQdZPZgaowihPLrpGz",
+      "_uuid": "ee88d3b0-4297-4c88-acd8-0a8868c97c19",
+      "meta/rootUuid": "uuid:ee88d3b0-4297-4c88-acd8-0a8868c97c19",
+      "_attachments": [],
+      "_status": "submitted_via_web",
+      "_geolocation": [
+        null,
+        null
+      ],
+      "_submission_time": "2025-12-19T13:32:52",
+      "_tags": [],
+      "_notes": [],
+      "_validation_status": {},
+      "_submitted_by": null
+    }
+  ]
+}
