@@ -31,6 +31,12 @@
   const elMeta = $("meta");
   const tbody = document.querySelector("#tbl tbody");
 
+  // Guard (évite crash si mauvais fichier HTML)
+  if (!tbody || !elMeta || !elReset) {
+    console.error("DOM table elements missing. This script must run on index.html.");
+    return;
+  }
+
   // =====================================================
   // 3) Utils
   // =====================================================
@@ -47,6 +53,7 @@
       .sort((a, b) => a.localeCompare(b));
 
   function fillSelect(select, values, placeholder) {
+    if (!select) return;
     select.innerHTML =
       `<option value="">${esc(placeholder)}</option>` +
       values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
@@ -68,14 +75,14 @@
   // 5) Filtrage
   // =====================================================
   function apply() {
-    const q = (elQ.value || "").toLowerCase().trim();
-    const pilier = elPilier.value || "";
-    const bureau = elBureau.value || "";
-    const sp = elStatutPlanif.value || "";
-    const ss = elStatutSuivi.value || "";
-    const from = elFrom.value || "";
-    const to = elTo.value || "";
-    const scope = elScope.value || "all";
+    const q = (elQ?.value || "").toLowerCase().trim();
+    const pilier = elPilier?.value || "";
+    const bureau = elBureau?.value || "";
+    const sp = elStatutPlanif?.value || "";
+    const ss = elStatutSuivi?.value || "";
+    const from = elFrom?.value || "";
+    const to = elTo?.value || "";
+    const scope = elScope?.value || "all";
 
     const filtered = data.filter(r => {
       if (pilier && r.pilier !== pilier) return false;
@@ -113,80 +120,83 @@
   }
 
   // =====================================================
-  // 6) Rendu tableau (VISUEL AMÉLIORÉ)
+  // 6) Rendu tableau
   // =====================================================
   function render(rows) {
-  const sorted = rows.slice().sort((a, b) => {
-    if (a.date_debut !== b.date_debut) {
-      return (a.date_debut || "").localeCompare(b.date_debut || "");
-    }
-    return (a.code_activite || "").localeCompare(b.code_activite || "");
-  });
+    const sorted = rows.slice().sort((a, b) => {
+      if (a.date_debut !== b.date_debut) {
+        return (a.date_debut || "").localeCompare(b.date_debut || "");
+      }
+      return (a.code_activite || "").localeCompare(b.code_activite || "");
+    });
 
-  tbody.innerHTML = sorted.map(r => {
-    const overdueClass = isOverdue(r) ? " badge--danger" : "";
-    const maj = r.date_mise_a_jour || r.submission_time || "";
+    tbody.innerHTML = sorted.map(r => {
+      const overdueClass = isOverdue(r) ? " badge--danger" : "";
+      const maj = r.date_mise_a_jour || r.submission_time || "";
 
-    // Progress bar %
-    let progressHTML = `
-      <div class="progress progress--empty">
-        <div class="progress-track">
-          <div class="progress-bar" style="width:0%"></div>
-        </div>
-        <div class="progress-val">—</div>
-      </div>`;
+      // Progress bar %
+      const rawPct = r.avancement_pct;
+      const pctNum = (rawPct === null || rawPct === undefined || rawPct === "")
+        ? null
+        : Number(rawPct);
 
-    if (typeof r.avancement_pct === "number" && !Number.isNaN(r.avancement_pct)) {
-      const pct = Math.max(0, Math.min(100, Math.round(r.avancement_pct)));
-      progressHTML = `
-        <div class="progress">
+      let progressHTML = `
+        <div class="progress progress--empty">
           <div class="progress-track">
-            <div class="progress-bar" style="width:${pct}%"></div>
+            <div class="progress-bar" style="width:0%"></div>
           </div>
-          <div class="progress-val">${pct}%</div>
+          <div class="progress-val">—</div>
         </div>`;
-    }
 
-    return `
-      <tr>
-        <!-- Code activité (rouge, non gras) -->
-        <td class="col-code">${esc(r.code_activite || "")}</td>
+      if (pctNum !== null && !Number.isNaN(pctNum)) {
+        const pct = Math.max(0, Math.min(100, Math.round(pctNum)));
+        progressHTML = `
+          <div class="progress">
+            <div class="progress-track">
+              <div class="progress-bar" style="width:${pct}%"></div>
+            </div>
+            <div class="progress-val">${pct}%</div>
+          </div>`;
+      }
 
-        <!-- Intitulé mis en valeur -->
-        <td class="col-title">
-          ${esc(r.titre || "")}
-          <span class="cell-sub">
-            ${esc(r.type_activite || "")} • ${esc(r.bureau || "")} • ${esc(r.pilier || "")}
-          </span>
-        </td>
+      return `
+        <tr>
+          <td class="col-code">${esc(r.code_activite || "")}</td>
 
-        <td>${esc((r.unites_impliquees || []).join("; "))}</td>
-        <td>${esc(r.date_debut || "")}</td>
-        <td>${esc(r.date_fin || "")}</td>
+          <td class="col-title">
+            ${esc(r.titre || "")}
+            <span class="cell-sub">
+              ${esc(r.type_activite || "")} • ${esc(r.bureau || "")} • ${esc(r.pilier || "")}
+            </span>
+          </td>
 
-        <td>
-          <span class="badge${overdueClass}">
-            ${esc(r.statut_planificateur || "")}
-          </span>
-        </td>
+          <td>${esc((r.unites_impliquees || []).join("; "))}</td>
+          <td>${esc(r.date_debut || "")}</td>
+          <td>${esc(r.date_fin || "")}</td>
 
-        <td>${esc(r.statut_suivi || "")}</td>
+          <td>
+            <span class="badge${overdueClass}">
+              ${esc(r.statut_planificateur || "")}
+            </span>
+          </td>
 
-        <!-- ✅ COLONNE % CORRECTEMENT ALIGNÉE -->
-        <td class="col-pct">${progressHTML}</td>
+          <td>${esc(r.statut_suivi || "")}</td>
 
-        <td class="notes">${esc(r.commentaire_suivi || "")}</td>
-        <td>${esc(r.validation || "")}</td>
-        <td>${esc(maj)}</td>
-      </tr>
-    `;
-  }).join("");
-}
+          <td class="col-pct">${progressHTML}</td>
+
+          <td class="notes">${esc(r.commentaire_suivi || "")}</td>
+          <td>${esc(r.validation || "")}</td>
+          <td>${esc(maj)}</td>
+        </tr>
+      `;
+    }).join("");
+  }
 
   // =====================================================
   // 7) Events
   // =====================================================
   [elQ, elPilier, elBureau, elStatutPlanif, elStatutSuivi, elFrom, elTo, elScope]
+    .filter(Boolean)
     .forEach(el => {
       el.addEventListener("input", apply);
       el.addEventListener("change", apply);
