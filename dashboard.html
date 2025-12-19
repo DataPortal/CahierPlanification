@@ -9,7 +9,7 @@
 <body>
   <header class="topbar">
     <div class="container">
-      <h1>Dashboard – tendances</h1>
+      <h1>Dashboard – Activités</h1>
       <nav class="nav">
         <a href="./index.html">Tableau</a>
         <a class="active" href="./dashboard.html">Dashboard</a>
@@ -20,30 +20,40 @@
   <main class="container">
     <section class="kpis grid-4">
       <div class="card kpi"><div class="muted">Total</div><div id="kpi_total" class="kpiVal">—</div></div>
-      <div class="card kpi"><div class="muted">Planifiées</div><div id="kpi_planned" class="kpiVal">—</div></div>
-      <div class="card kpi"><div class="muted">En cours</div><div id="kpi_ongoing" class="kpiVal">—</div></div>
-      <div class="card kpi"><div class="muted">Clôturées</div><div id="kpi_done" class="kpiVal">—</div></div>
+      <div class="card kpi"><div class="muted">En retard</div><div id="kpi_overdue" class="kpiVal">—</div></div>
+      <div class="card kpi"><div class="muted">Avec suivi</div><div id="kpi_with_followup" class="kpiVal">—</div></div>
+      <div class="card kpi"><div class="muted">Avancement moyen</div><div id="kpi_avg" class="kpiVal">—</div></div>
     </section>
 
     <section class="grid-2">
       <div class="card">
-        <h2>Répartition par pilier</h2>
+        <h2>Activités par pilier</h2>
         <canvas id="byPilier"></canvas>
       </div>
       <div class="card">
-        <h2>Répartition par statut</h2>
-        <canvas id="byStatus"></canvas>
+        <h2>Activités par bureau</h2>
+        <canvas id="byBureau"></canvas>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h2>Activités par type</h2>
+        <canvas id="byType"></canvas>
+      </div>
+      <div class="card">
+        <h2>Répartition des statuts (planificateur)</h2>
+        <canvas id="byStatutPlanif"></canvas>
       </div>
     </section>
 
     <section class="card">
-      <h2>Tendance mensuelle (nombre d’activités par mois de début)</h2>
-      <canvas id="trend"></canvas>
+      <h2>Tendance mensuelle (date de début)</h2>
+      <canvas id="trendStart"></canvas>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="assets/utils.js"></script>
   <script src="assets/app-dashboard.js"></script>
 </body>
 </html>
