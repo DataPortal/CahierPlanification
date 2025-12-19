@@ -1,22 +1,39 @@
 (async function () {
-  // 1) Charger Kobo (brut) depuis le repo
-  const raw = await fetch("./data/submissions.json", { cache: "no-store" }).then(r => r.json());
-  const data = (raw && raw.results) ? raw.results : raw;
+  // =====================================================
+  // 1) Charger les activités normalisées
+  // =====================================================
+  let data;
+  try {
+    data = await fetch("./data/activities.json", { cache: "no-store" }).then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
+    if (!Array.isArray(data)) throw new Error("activities.json is not an array");
+  } catch (e) {
+    console.error("Failed to load activities.json", e);
+    return;
+  }
 
+  // =====================================================
   // 2) DOM
-  const elQ = document.getElementById("q");
-  const elPilier = document.getElementById("pilier");
-  const elBureau = document.getElementById("bureau");
-  const elStatutPlanif = document.getElementById("statutPlanif");
-  const elStatutSuivi = document.getElementById("statutSuivi");
-  const elFrom = document.getElementById("from");
-  const elTo = document.getElementById("to");
-  const elScope = document.getElementById("scope");
-  const elReset = document.getElementById("reset");
-  const elMeta = document.getElementById("meta");
+  // =====================================================
+  const $ = (id) => document.getElementById(id);
+
+  const elQ = $("q");
+  const elPilier = $("pilier");
+  const elBureau = $("bureau");
+  const elStatutPlanif = $("statutPlanif");
+  const elStatutSuivi = $("statutSuivi");
+  const elFrom = $("from");
+  const elTo = $("to");
+  const elScope = $("scope");
+  const elReset = $("reset");
+  const elMeta = $("meta");
   const tbody = document.querySelector("#tbl tbody");
 
-  // 3) Utils locales (indépendant de utils.js)
+  // =====================================================
+  // 3) Utils
+  // =====================================================
   const esc = (v) =>
     (v == null ? "" : String(v))
       .replaceAll("&", "&amp;")
@@ -26,14 +43,8 @@
       .replaceAll("'", "&#039;");
 
   const uniq = (arr) =>
-    Array.from(
-      new Set(
-        arr
-          .filter(v => v !== null && v !== undefined)
-          .map(v => String(v).trim())
-          .filter(v => v !== "")
-      )
-    ).sort((a, b) => a.localeCompare(b));
+    Array.from(new Set(arr.filter(Boolean).map(v => String(v).trim()).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b));
 
   function fillSelect(select, values, placeholder) {
     select.innerHTML =
@@ -41,55 +52,21 @@
       values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
   }
 
-  function units(r) {
-    const txt = (r["Autres unités impliquées (si applicable)"] || "").toString().trim();
-    const flags = [];
-
-    const map = [
-      ["Programme", "Autres unités impliquées (si applicable)/Programme"],
-      ["Opérations / Admin-Fin", "Autres unités impliquées (si applicable)/Opérations / Admin-Fin"],
-      ["Suivi-Évaluation (M&E)", "Autres unités impliquées (si applicable)/Suivi-Évaluation (M&E)"],
-      ["Communication", "Autres unités impliquées (si applicable)/Communication"],
-      ["Protection / VBG", "Autres unités impliquées (si applicable)/Protection / VBG"],
-      ["Information Management", "Autres unités impliquées (si applicable)/Information Management"],
-      ["Achats / Logistique", "Autres unités impliquées (si applicable)/Achats / Logistique"],
-      ["Autre", "Autres unités impliquées (si applicable)/Autre"],
-    ];
-
-    map.forEach(([label, key]) => {
-      const v = r[key];
-      if (v === 1 || v === "1" || v === true || v === "true") flags.push(label);
-    });
-
-    const out = [];
-    if (txt) out.push(txt);
-    flags.forEach(f => { if (!out.includes(f)) out.push(f); });
-    return out.join("; ");
-  }
-
   function isOverdue(r) {
-    const fin = (r["Date de fin"] || "").toString().trim();
-    if (!fin) return false;
-
-    const end = new Date(fin);
-    if (isNaN(end.getTime())) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const status = ((r["Statut de suivi"] || r["Statut (planificateur)"] || "") + "").toLowerCase();
-    const done = ["clôt", "clot", "termin", "achev", "done", "completed"].some(s => status.includes(s));
-
-    return end < today && !done;
+    return r.overdue === 1;
   }
 
-  // 4) Filtres
-  fillSelect(elPilier, uniq(data.map(d => d["Pilier ONU Femmes"])), "Tous les piliers");
-  fillSelect(elBureau, uniq(data.map(d => d["Bureau ONU Femmes (RDC)"])), "Tous les bureaux");
-  fillSelect(elStatutPlanif, uniq(data.map(d => d["Statut (planificateur)"])), "Tous statuts (planif)");
-  fillSelect(elStatutSuivi, uniq(data.map(d => d["Statut de suivi"])), "Tous statuts (suivi)");
+  // =====================================================
+  // 4) Filtres (depuis activities.json)
+  // =====================================================
+  fillSelect(elPilier, uniq(data.map(d => d.pilier)), "Tous les piliers");
+  fillSelect(elBureau, uniq(data.map(d => d.bureau)), "Tous les bureaux");
+  fillSelect(elStatutPlanif, uniq(data.map(d => d.statut_planificateur)), "Tous statuts (planif)");
+  fillSelect(elStatutSuivi, uniq(data.map(d => d.statut_suivi)), "Tous statuts (suivi)");
 
-  // 5) Filtrage + rendu
+  // =====================================================
+  // 5) Filtrage
+  // =====================================================
   function apply() {
     const q = (elQ.value || "").toLowerCase().trim();
     const pilier = elPilier.value || "";
@@ -101,32 +78,31 @@
     const scope = elScope.value || "all";
 
     const filtered = data.filter(r => {
-      if (pilier && (r["Pilier ONU Femmes"] || "") !== pilier) return false;
-      if (bureau && (r["Bureau ONU Femmes (RDC)"] || "") !== bureau) return false;
-      if (sp && (r["Statut (planificateur)"] || "") !== sp) return false;
-      if (ss && (r["Statut de suivi"] || "") !== ss) return false;
+      if (pilier && r.pilier !== pilier) return false;
+      if (bureau && r.bureau !== bureau) return false;
+      if (sp && r.statut_planificateur !== sp) return false;
+      if (ss && r.statut_suivi !== ss) return false;
 
-      const sd = (r["Date de début"] || "").toString();
-      if (from && sd && sd < from) return false;
-      if (to && sd && sd > to) return false;
+      if (from && r.date_debut && r.date_debut < from) return false;
+      if (to && r.date_debut && r.date_debut > to) return false;
 
       if (scope === "overdue" && !isOverdue(r)) return false;
-      if (scope === "withFollowup" && !((r["Commentaire de suivi"] || "").toString().trim())) return false;
+      if (scope === "withFollowup" && !(r.commentaire_suivi || "").trim()) return false;
 
       if (!q) return true;
 
       const blob = [
-        r["code_activite"],
-        r["Activité (titre court)"],
-        r["Type d’activité"],
-        r["Pilier ONU Femmes"],
-        r["Bureau ONU Femmes (RDC)"],
-        units(r),
-        r["Statut (planificateur)"],
-        r["Statut de suivi"],
-        r["Commentaire de suivi"],
-        r["Validation"],
-        r["Commentaire de validation"],
+        r.code_activite,
+        r.titre,
+        r.type_activite,
+        r.pilier,
+        r.bureau,
+        (r.unites_impliquees || []).join(" "),
+        r.statut_planificateur,
+        r.statut_suivi,
+        r.commentaire_suivi,
+        r.validation,
+        r.commentaire_validation,
       ].join(" ").toLowerCase();
 
       return blob.includes(q);
@@ -136,45 +112,48 @@
     elMeta.textContent = `${filtered.length} activité(s) sur ${data.length}`;
   }
 
+  // =====================================================
+  // 6) Rendu tableau
+  // =====================================================
   function render(rows) {
-    // tri par date début puis code activité
     const sorted = rows.slice().sort((a, b) => {
-      const da = (a["Date de début"] || "").toString();
-      const db = (b["Date de début"] || "").toString();
-      if (da !== db) return da.localeCompare(db);
-      return ((a["code_activite"] || "") + "").localeCompare((b["code_activite"] || "") + "");
+      if (a.date_debut !== b.date_debut) return (a.date_debut || "").localeCompare(b.date_debut || "");
+      return (a.code_activite || "").localeCompare(b.code_activite || "");
     });
 
     tbody.innerHTML = sorted.map(r => {
-      const maj = r["date_mise_a_jour"] || r["_submission_time"] || "";
       const overdueClass = isOverdue(r) ? " badge--danger" : "";
+      const maj = r.date_mise_a_jour || r.submission_time || "";
 
       return `
         <tr>
-          <td class="strong">${esc(r["code_activite"] || "")}</td>
-          <td class="strong">${esc(r["Activité (titre court)"] || "")}</td>
-          <td>${esc(r["Type d’activité"] || "")}</td>
-          <td>${esc(r["Pilier ONU Femmes"] || "")}</td>
-          <td>${esc(r["Bureau ONU Femmes (RDC)"] || "")}</td>
-          <td>${esc(units(r))}</td>
-          <td>${esc(r["Date de début"] || "")}</td>
-          <td>${esc(r["Date de fin"] || "")}</td>
-          <td><span class="badge${overdueClass}">${esc(r["Statut (planificateur)"] || "")}</span></td>
-          <td>${esc(r["Statut de suivi"] || "")}</td>
-          <td>${esc(r["Niveau d’avancement (%)"] || "")}</td>
-          <td class="notes">${esc(r["Commentaire de suivi"] || "")}</td>
-          <td>${esc(r["Validation"] || "")}</td>
+          <td class="strong">${esc(r.code_activite)}</td>
+          <td class="strong">${esc(r.titre)}</td>
+          <td>${esc(r.type_activite)}</td>
+          <td>${esc(r.pilier)}</td>
+          <td>${esc(r.bureau)}</td>
+          <td>${esc((r.unites_impliquees || []).join("; "))}</td>
+          <td>${esc(r.date_debut)}</td>
+          <td>${esc(r.date_fin)}</td>
+          <td><span class="badge${overdueClass}">${esc(r.statut_planificateur)}</span></td>
+          <td>${esc(r.statut_suivi)}</td>
+          <td>${esc(r.avancement_pct ?? "")}</td>
+          <td class="notes">${esc(r.commentaire_suivi)}</td>
+          <td>${esc(r.validation)}</td>
           <td>${esc(maj)}</td>
         </tr>
       `;
     }).join("");
   }
 
-  // 6) Events
-  [elQ, elPilier, elBureau, elStatutPlanif, elStatutSuivi, elFrom, elTo, elScope].forEach(el => {
-    el.addEventListener("input", apply);
-    el.addEventListener("change", apply);
-  });
+  // =====================================================
+  // 7) Events
+  // =====================================================
+  [elQ, elPilier, elBureau, elStatutPlanif, elStatutSuivi, elFrom, elTo, elScope]
+    .forEach(el => {
+      el.addEventListener("input", apply);
+      el.addEventListener("change", apply);
+    });
 
   elReset.addEventListener("click", () => {
     elQ.value = "";
