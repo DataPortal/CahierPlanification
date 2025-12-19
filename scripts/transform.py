@@ -5,41 +5,23 @@ from pathlib import Path
 INPUT = Path("data/submissions.json")
 OUTPUT = Path("data/activities.json")
 
-# =========================================================
-# Helpers génériques
-# =========================================================
-
-def pick(d: dict, *keys):
-    """Retourne la première valeur non vide trouvée parmi les clés."""
-    for k in keys:
-        if k in d and d[k] not in (None, "", " "):
-            return d[k]
-    return None
-
+# ----------------------------
+# Helpers
+# ----------------------------
 
 def as_str(x) -> str:
     return "" if x is None else str(x)
 
-
 def to_iso_date(v) -> str:
-    """
-    Normalise une date Kobo vers AAAA-MM-JJ si possible.
-    Accepte:
-      - '2025-12-19'
-      - '2025-12-19T14:31:31.568+01:00'
-    """
     s = as_str(v).strip()
     if not s:
         return ""
     try:
         return datetime.fromisoformat(s.replace("Z", "+00:00")).date().isoformat()
     except Exception:
-        # fallback: garder les 10 premiers caractères si format proche ISO
         return s[:10]
 
-
 def to_iso_datetime(v) -> str:
-    """Normalise un datetime Kobo vers ISO 8601."""
     s = as_str(v).strip()
     if not s:
         return ""
@@ -48,76 +30,54 @@ def to_iso_datetime(v) -> str:
     except Exception:
         return s
 
-
-def bool01(v) -> int:
-    """Normalise les booléens Kobo en 0/1."""
-    return 1 if v in (1, "1", True, "true", "True", "YES", "yes") else 0
-
-
-# =========================================================
-# Normalisation métier
-# =========================================================
-
-def normalize_units(r: dict) -> list[str]:
+def normalize_status(s: str) -> str:
     """
-    Construit la liste des unités impliquées à partir :
-    - du champ texte global
-    - des cases à cocher (1/0)
+    Harmonise quelques statuts (optionnel mais utile pour filtres/graphiques).
     """
-    units = []
+    t = as_str(s).strip()
+    if not t:
+        return ""
+    low = t.lower()
+    if "plan" in low:
+        return "Planifiée"
+    if "final" in low or "clôt" in low or "clot" in low or "termin" in low:
+        return "Finalisée"
+    if "cours" in low or "en" in low:
+        return "En cours"
+    return t  # fallback
 
-    txt = as_str(pick(r, "Autres unités impliquées (si applicable)")).strip()
-    if txt:
-        units.append(txt)
-
-    mapping = [
-        ("Programme", "Autres unités impliquées (si applicable)/Programme"),
-        ("Opérations / Admin-Fin", "Autres unités impliquées (si applicable)/Opérations / Admin-Fin"),
-        ("Suivi-Évaluation (M&E)", "Autres unités impliquées (si applicable)/Suivi-Évaluation (M&E)"),
-        ("Communication", "Autres unités impliquées (si applicable)/Communication"),
-        ("Protection / VBG", "Autres unités impliquées (si applicable)/Protection / VBG"),
-        ("Information Management", "Autres unités impliquées (si applicable)/Information Management"),
-        ("Achats / Logistique", "Autres unités impliquées (si applicable)/Achats / Logistique"),
-        ("Autre", "Autres unités impliquées (si applicable)/Autre"),
-    ]
-
-    for label, col in mapping:
-        if bool01(pick(r, col)) == 1 and label not in units:
-            units.append(label)
-
-    return units
-
-
-def compute_overdue(date_fin: str, statut_suivi: str, statut_planif: str) -> int:
+def compute_overdue(date_fin_iso: str, statut_suivi: str, statut_planif: str) -> int:
     """
-    Détermine si une activité est en retard :
-    - Date de fin < aujourd’hui
-    - ET statut non terminé
+    En retard si date_fin < aujourd’hui ET pas finalisée/terminée.
     """
-    if not date_fin:
+    if not date_fin_iso:
         return 0
-
     try:
-        d_end = date.fromisoformat(date_fin[:10])
+        d_end = date.fromisoformat(date_fin_iso[:10])
     except Exception:
         return 0
 
     status = (statut_suivi or statut_planif or "").lower()
-
-    done = any(
-        kw in status
-        for kw in ("clôt", "clot", "termin", "achev", "done", "completed")
-    )
-
+    done = any(x in status for x in ["final", "clôt", "clot", "termin", "achev", "done", "completed"])
     if done:
         return 0
 
     return 1 if d_end < date.today() else 0
 
+def extract_validation_label(r: dict) -> str:
+    """
+    Kobo met parfois la validation dans _validation_status (objet).
+    """
+    vs = r.get("_validation_status")
+    if isinstance(vs, dict):
+        # label: "Approved"
+        label = vs.get("label") or vs.get("uid")
+        return as_str(label).strip()
+    return ""
 
-# =========================================================
+# ----------------------------
 # Main
-# =========================================================
+# ----------------------------
 
 if not INPUT.exists():
     raise FileNotFoundError(f"Input file not found: {INPUT}")
@@ -129,62 +89,80 @@ rows = raw["results"] if isinstance(raw, dict) and "results" in raw else raw
 activities = []
 
 for r in rows:
-    date_fin = to_iso_date(pick(r, "Date de fin"))
+    # --- Planification ---
+    code_activite = r.get("grp_planif/code_activite")
+    titre = r.get("grp_planif/activite_titre")
+    type_activite = r.get("grp_planif/type_activite")
+    pilier = r.get("grp_planif/pilier")
+    bureau = r.get("grp_planif/bureau")
+    unites_txt = r.get("grp_planif/autres_unites")
 
-    statut_planif = pick(r, "Statut (planificateur)")
-    statut_suivi = pick(r, "Statut de suivi")
+    date_debut = to_iso_date(r.get("grp_planif/date_debut"))
+    date_fin = to_iso_date(r.get("grp_planif/date_fin"))
 
-    av_raw = pick(r, "Niveau d’avancement (%)")
+    statut_planif_raw = r.get("grp_planif/statut_planif")
+    statut_planif = normalize_status(statut_planif_raw)
+
+    # --- Suivi (point focal) ---
+    statut_suivi_raw = r.get("grp_suivi/statut_suivi")
+    statut_suivi = normalize_status(statut_suivi_raw)
+
+    commentaire_suivi = r.get("grp_suivi/commentaire_suivi")
+    date_mise_a_jour = to_iso_datetime(r.get("grp_suivi/date_mise_a_jour"))
+
+    validation = r.get("grp_suivi/validation_pf") or extract_validation_label(r)
+    commentaire_validation = r.get("grp_suivi/commentaire_validation")
+
+    # Avancement (%): votre exemple ne le montre pas. On laisse prêt si vous l'ajoutez plus tard.
+    av_raw = r.get("grp_suivi/avancement_pct") or r.get("grp_suivi/niveau_avancement") or r.get("grp_suivi/avancement")
     try:
-        av_pct = float(av_raw) if av_raw not in (None, "", " ") else None
+        avancement_pct = float(av_raw) if av_raw not in (None, "", " ") else None
     except Exception:
-        av_pct = None
+        avancement_pct = None
 
-    activity = {
-        "id": pick(r, "_id"),
-        "uuid": pick(r, "_uuid"),
-        "index": pick(r, "_index"),
+    overdue = compute_overdue(date_fin, statut_suivi, statut_planif)
 
-        "code_activite": pick(r, "code_activite"),
-        "titre": pick(r, "Activité (titre court)"),
-        "type_activite": pick(r, "Type d’activité"),
-        "pilier": pick(r, "Pilier ONU Femmes"),
-        "bureau": pick(r, "Bureau ONU Femmes (RDC)"),
+    activities.append({
+        # Identifiants Kobo
+        "id": r.get("_id"),
+        "uuid": r.get("_uuid"),
+        "instance_id": r.get("meta/instanceID"),
 
-        "unites_impliquees": normalize_units(r),
+        # Timestamps Kobo (bruts)
+        "start": to_iso_datetime(r.get("start")),
+        "end": to_iso_datetime(r.get("end")),
+        "submission_time": to_iso_datetime(r.get("_submission_time")),
 
-        "date_debut": to_iso_date(pick(r, "Date de début")),
+        # Champs planification (normalisés)
+        "code_activite": code_activite,
+        "titre": titre,
+        "type_activite": type_activite,
+        "pilier": pilier,
+        "bureau": bureau,
+        "unites_impliquees": [as_str(unites_txt).strip()] if as_str(unites_txt).strip() else [],
+
+        "date_debut": date_debut,
         "date_fin": date_fin,
-
-        "responsable": pick(r, "Responsable (nom)"),
-
         "statut_planificateur": statut_planif,
+
+        # Champs suivi (normalisés)
         "statut_suivi": statut_suivi,
+        "avancement_pct": avancement_pct,
+        "commentaire_suivi": commentaire_suivi,
 
-        "avancement_pct": av_pct,
-        "commentaire_suivi": pick(r, "Commentaire de suivi"),
+        "validation": validation,
+        "commentaire_validation": commentaire_validation,
+        "date_mise_a_jour": date_mise_a_jour,
 
-        "validation": pick(r, "Validation"),
-        "commentaire_validation": pick(r, "Commentaire de validation"),
-
-        "date_mise_a_jour": to_iso_datetime(pick(r, "date_mise_a_jour")),
-        "submission_time": to_iso_datetime(pick(r, "_submission_time")),
-
-        "overdue": compute_overdue(date_fin, statut_suivi, statut_planif),
-    }
-
-    activities.append(activity)
+        # Indicateur dérivé
+        "overdue": overdue,
+    })
 
 # Tri stable : date début puis code activité
-activities.sort(
-    key=lambda x: (
-        x.get("date_debut") or "9999-12-31",
-        x.get("code_activite") or "",
-    )
-)
+activities.sort(key=lambda x: (x.get("date_debut") or "9999-12-31", x.get("code_activite") or ""))
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 with OUTPUT.open("w", encoding="utf-8") as f:
     json.dump(activities, f, ensure_ascii=False, indent=2)
 
-print(f"Transformed {len(activities)} submissions → {OUTPUT}")
+print(f"Transformed {len(activities)} rows -> {OUTPUT}")
