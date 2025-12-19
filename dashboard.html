@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard – Activités | ONU Femmes RDC</title>
 
-  <!-- Anti-cache GitHub Pages -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -14,10 +13,6 @@
 </head>
 
 <body>
-
-  <!-- =====================================================
-       HEADER – Bandeau ONU Femmes
-       ===================================================== -->
   <header class="topbar">
     <div class="container">
       <h1>Dashboard – Suivi des activités</h1>
@@ -28,12 +23,29 @@
     </div>
   </header>
 
-  <!-- =====================================================
-       MAIN
-       ===================================================== -->
   <main class="container">
 
-    <!-- ================= KPIs ================= -->
+    <!-- ✅ TOP ACTIVITÉS À RISQUE (déplacé sous le bandeau) -->
+    <section class="card">
+      <h2>Top activités en retard / à risque</h2>
+      <div class="table-wrap">
+        <table id="riskTbl">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Activité</th>
+              <th>Début</th>
+              <th>Fin</th>
+              <th>Statut</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- KPIs -->
     <section class="kpis grid-4">
       <div class="card kpi">
         <div class="muted">Total activités</div>
@@ -56,7 +68,7 @@
       </div>
     </section>
 
-    <!-- ================= Charts – Ligne 1 ================= -->
+    <!-- Charts – Ligne 1 -->
     <section class="grid-2">
       <div class="card chart">
         <h2>Activités par pilier</h2>
@@ -69,7 +81,7 @@
       </div>
     </section>
 
-    <!-- ================= Charts – Ligne 2 ================= -->
+    <!-- Charts – Ligne 2 -->
     <section class="grid-2">
       <div class="card chart">
         <h2>Activités par type</h2>
@@ -82,33 +94,10 @@
       </div>
     </section>
 
-    <!-- ================= Trend ================= -->
+    <!-- Trend -->
     <section class="card chart">
       <h2>Tendance mensuelle (date de début)</h2>
       <canvas id="trendStart"></canvas>
-    </section>
-
-    <!-- ================= Top activités à risque ================= -->
-    <section class="card">
-      <h2>Top activités en retard / à risque</h2>
-
-      <div class="table-wrap">
-        <table id="riskTbl">
-          <thead>
-            <tr>
-              <th>Code</th>
-              <th>Activité</th>
-              <th>Début</th>
-              <th>Fin</th>
-              <th>Statut</th>
-              <th>%</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- rempli dynamiquement par app-dashboard.js -->
-          </tbody>
-        </table>
-      </div>
     </section>
 
     <noscript>
@@ -119,11 +108,7 @@
 
   </main>
 
-  <!-- =====================================================
-       SCRIPTS
-       ===================================================== -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="assets/app-dashboard.js"></script>
-
 </body>
 </html>
