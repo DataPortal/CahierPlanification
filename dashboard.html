@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard – Activités</title>
+  <title>Dashboard – Activités | ONU Femmes RDC</title>
 
-  <!-- Recommandé: limiter les soucis de cache GitHub Pages -->
+  <!-- Anti-cache GitHub Pages -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -14,13 +14,13 @@
 </head>
 
 <body>
-  <header class="topbar">
-    <div class="container topbarRow">
-      <div>
-        <h1>Dashboard – Activités</h1>
-        <div class="subhead" id="lastUpdate">Dernière mise à jour : —</div>
-      </div>
 
+  <!-- =====================================================
+       HEADER – Bandeau ONU Femmes
+       ===================================================== -->
+  <header class="topbar">
+    <div class="container">
+      <h1>Dashboard – Suivi des activités</h1>
       <nav class="nav">
         <a href="./index.html">Tableau</a>
         <a class="active" href="./dashboard.html">Dashboard</a>
@@ -28,116 +28,86 @@
     </div>
   </header>
 
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
   <main class="container">
 
-    <!-- Toolbar filtres (optionnel, mais moderne) -->
-    <section class="card toolbar">
-      <div class="toolbarGrid">
-        <div>
-          <label>Pilier</label>
-          <select id="f_pilier"></select>
-        </div>
-        <div>
-          <label>Bureau</label>
-          <select id="f_bureau"></select>
-        </div>
-        <div>
-          <label>Période (début) - du</label>
-          <input id="f_from" type="date" />
-        </div>
-        <div>
-          <label>au</label>
-          <input id="f_to" type="date" />
-        </div>
-        <div class="toolbarActions">
-          <button id="btnResetDash" class="btn" type="button">Réinitialiser</button>
-          <a class="btn btnGhost" href="./data/submissions.json" target="_blank" rel="noopener">Voir JSON</a>
-        </div>
-      </div>
-      <div class="muted" id="scopeMeta">—</div>
-    </section>
-
-    <!-- KPIs -->
+    <!-- ================= KPIs ================= -->
     <section class="kpis grid-4">
       <div class="card kpi">
-        <div class="muted">Total</div>
+        <div class="muted">Total activités</div>
         <div id="kpi_total" class="kpiVal">—</div>
-        <div class="kpiHint">Toutes activités</div>
       </div>
 
       <div class="card kpi">
-        <div class="muted">En retard</div>
+        <div class="muted">Activités en retard</div>
         <div id="kpi_overdue" class="kpiVal">—</div>
-        <div class="kpiHint">Date de fin dépassée</div>
       </div>
 
       <div class="card kpi">
-        <div class="muted">Avec suivi</div>
+        <div class="muted">Avec suivi renseigné</div>
         <div id="kpi_with_followup" class="kpiVal">—</div>
-        <div class="kpiHint">Commentaire de suivi renseigné</div>
       </div>
 
       <div class="card kpi">
         <div class="muted">Avancement moyen</div>
         <div id="kpi_avg" class="kpiVal">—</div>
-        <div class="kpiHint">Sur les % disponibles</div>
       </div>
     </section>
 
-    <!-- Charts row 1 -->
+    <!-- ================= Charts – Ligne 1 ================= -->
     <section class="grid-2">
-      <div class="card chartCard">
-        <div class="cardHead">
-          <h2>Activités par pilier</h2>
-          <span class="pill">Bar</span>
-        </div>
-        <div class="chartWrap">
-          <canvas id="byPilier"></canvas>
-        </div>
+      <div class="card chart">
+        <h2>Activités par pilier</h2>
+        <canvas id="byPilier"></canvas>
       </div>
 
-      <div class="card chartCard">
-        <div class="cardHead">
-          <h2>Activités par bureau</h2>
-          <span class="pill">Bar</span>
-        </div>
-        <div class="chartWrap">
-          <canvas id="byBureau"></canvas>
-        </div>
+      <div class="card chart">
+        <h2>Activités par bureau</h2>
+        <canvas id="byBureau"></canvas>
       </div>
     </section>
 
-    <!-- Charts row 2 -->
+    <!-- ================= Charts – Ligne 2 ================= -->
     <section class="grid-2">
-      <div class="card chartCard">
-        <div class="cardHead">
-          <h2>Activités par type</h2>
-          <span class="pill">Bar</span>
-        </div>
-        <div class="chartWrap">
-          <canvas id="byType"></canvas>
-        </div>
+      <div class="card chart">
+        <h2>Activités par type</h2>
+        <canvas id="byType"></canvas>
       </div>
 
-      <div class="card chartCard">
-        <div class="cardHead">
-          <h2>Statuts (planificateur)</h2>
-          <span class="pill">Bar</span>
-        </div>
-        <div class="chartWrap">
-          <canvas id="byStatutPlanif"></canvas>
-        </div>
+      <div class="card chart">
+        <h2>Statuts (planificateur)</h2>
+        <canvas id="byStatutPlanif"></canvas>
       </div>
     </section>
 
-    <!-- Trend -->
-    <section class="card chartCard">
-      <div class="cardHead">
-        <h2>Tendance mensuelle (date de début)</h2>
-        <span class="pill">Line</span>
-      </div>
-      <div class="chartWrap chartTall">
-        <canvas id="trendStart"></canvas>
+    <!-- ================= Trend ================= -->
+    <section class="card chart">
+      <h2>Tendance mensuelle (date de début)</h2>
+      <canvas id="trendStart"></canvas>
+    </section>
+
+    <!-- ================= Top activités à risque ================= -->
+    <section class="card">
+      <h2>Top activités en retard / à risque</h2>
+
+      <div class="table-wrap">
+        <table id="riskTbl">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Activité</th>
+              <th>Début</th>
+              <th>Fin</th>
+              <th>Statut</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- rempli dynamiquement par app-dashboard.js -->
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -149,7 +119,11 @@
 
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-  <script src="assets/app-dashboard.js" defer></script>
+  <!-- =====================================================
+       SCRIPTS
+       ===================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="assets/app-dashboard.js"></script>
+
 </body>
 </html>
