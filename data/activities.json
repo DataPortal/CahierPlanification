@@ -52,6 +52,32 @@
     "overdue": 0
   },
   {
+    "id": 634267805,
+    "uuid": "70b683ac-cc4c-4ece-8dda-9dbc9a978d40",
+    "instance_id": "uuid:70b683ac-cc4c-4ece-8dda-9dbc9a978d40",
+    "start": "2025-12-19T19:15:45.739000+01:00",
+    "end": "2025-12-19T19:16:55.884000+01:00",
+    "submission_time": "2025-12-19T18:16:57",
+    "code_activite": "UNW-DRC-2025-EVAW-7ec",
+    "titre": "Mon activite",
+    "type_activite": "Atelier",
+    "pilier": "EVAW",
+    "bureau": "KALEMIE",
+    "unites_impliquees": [
+      "Programme"
+    ],
+    "date_debut": "2025-12-18",
+    "date_fin": "2025-12-25",
+    "statut_planificateur": "En cours",
+    "statut_suivi": "En cours",
+    "avancement_pct": null,
+    "commentaire_suivi": "Bien",
+    "validation": "Approved",
+    "commentaire_validation": null,
+    "date_mise_a_jour": "2025-12-19T19:15:45.795000+01:00",
+    "overdue": 0
+  },
+  {
     "id": 634193252,
     "uuid": "42154b43-1d01-40f0-9010-355f1cdd1081",
     "instance_id": "uuid:42154b43-1d01-40f0-9010-355f1cdd1081",
