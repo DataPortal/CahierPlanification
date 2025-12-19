@@ -3,22 +3,35 @@ name: Sync Kobo Data
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */5 * * * *"   # toutes les 5 minutes
+    - cron: "*/5 * * * *"   # toutes les 5 minutes (GitHub = 5 champs)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kobo-sync
+  cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
-        run: pip install requests python-dateutil
+        run: pip install -r requirements.txt
+        # Si vous n'avez pas requirements.txt, remplacez par:
+        # run: pip install requests python-dateutil
 
       - name: Fetch Kobo submissions
         env:
@@ -32,8 +45,20 @@ jobs:
 
       - name: Commit & push if changed
         run: |
+          set -e
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git add data/submissions.json data/activities.json
-          git diff --cached --quiet || git commit -m "Update Kobo data"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update Kobo data"
+
+          # Evite les échecs si le remote a avancé
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "${GITHUB_REF_NAME}"
