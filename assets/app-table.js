@@ -214,5 +214,15 @@
     apply();
   });
 
+  // 1er rendu
   apply();
+
+  // =====================================================
+  // 8) Activer le drag & resize des colonnes (IMPORTANT)
+  // =====================================================
+  if (window.enableColumnResize) {
+    window.enableColumnResize("#tbl", { minPx: 80 });
+  } else {
+    console.warn("enableColumnResize not found. Check that assets/col-resize.js is loaded before app-table.js");
+  }
 })();
