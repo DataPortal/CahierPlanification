@@ -52,6 +52,32 @@
     "overdue": 0
   },
   {
+    "id": 634193252,
+    "uuid": "42154b43-1d01-40f0-9010-355f1cdd1081",
+    "instance_id": "uuid:42154b43-1d01-40f0-9010-355f1cdd1081",
+    "start": "2025-12-19T16:17:02.226000+01:00",
+    "end": "2025-12-19T17:29:05.635000+01:00",
+    "submission_time": "2025-12-19T16:29:07",
+    "code_activite": "UNW-DRC-2025-COORD-d49",
+    "titre": "Coordination conjointe",
+    "type_activite": "Coordination",
+    "pilier": "COORD",
+    "bureau": "BUNIA",
+    "unites_impliquees": [
+      "Comms IM"
+    ],
+    "date_debut": "2025-12-19",
+    "date_fin": "2025-12-26",
+    "statut_planificateur": "Planifiée",
+    "statut_suivi": "Planifiée",
+    "avancement_pct": null,
+    "commentaire_suivi": "Activité en cours de realisation",
+    "validation": "On Hold",
+    "commentaire_validation": null,
+    "date_mise_a_jour": "2025-12-19T17:27:25.143000+01:00",
+    "overdue": 0
+  },
+  {
     "id": 634138408,
     "uuid": "380dbd9f-a408-49d8-b880-ef0baf868dad",
     "instance_id": "uuid:380dbd9f-a408-49d8-b880-ef0baf868dad",
