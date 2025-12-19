@@ -5,6 +5,8 @@
    - Alignement strict du tableau principal (#tbl)
    - Code activité rouge non gras + Intitulé mis en évidence
    - Barre horizontale % avancement (colonne % alignée)
+   - Affichage complet des textes (PAS d’ellipsis)
+   - Scroll horizontal/vertical (curseurs) dans les tableaux
    - CSS "Top activités à risque" (riskTbl)
    ========================================================= */
 
@@ -185,16 +187,27 @@ label{
 }
 .muted{color:var(--muted);font-size:var(--fs-xs)}
 
-/* =========================
-   Table (commun)
-   ========================= */
-.table-wrap{overflow:auto;border-radius:12px}
+/* =========================================================
+   TABLE-WRAP : scroll horizontal + vertical (curseurs)
+   ========================================================= */
+.table-wrap{
+  overflow-x:auto;            /* curseur horizontal */
+  overflow-y:auto;            /* curseur vertical */
+  max-height:72vh;            /* active scroll vertical si beaucoup de lignes */
+  border:1px solid var(--border);
+  border-radius:12px;
+}
 
+/* =========================================================
+   Table (commun)
+   - Affichage complet (pas d’ellipsis)
+   - Wrap du texte
+   ========================================================= */
 table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
-  min-width:1050px;
+  min-width:1250px;           /* force scroll horizontal sur petits écrans */
 }
 
 th,td{
@@ -204,6 +217,7 @@ th,td{
   font-size:var(--fs-small);
 }
 
+/* En-tête (fond coloré) */
 th{
   position:sticky;
   top:0;
@@ -217,18 +231,30 @@ th{
   color:#0B1F2A;
 }
 
-tbody tr:hover{background:var(--row-hover)}
+/* IMPORTANT : afficher le texte en entier */
+td, th{
+  overflow:visible;           /* ne coupe pas */
+  text-overflow:clip;         /* pas d’ellipsis */
+  white-space:normal;         /* autorise retour à la ligne */
+  word-break:break-word;      /* gère les textes longs */
+}
 
-.notes{min-width:260px;white-space:pre-wrap;color:#111827}
+tbody tr:hover{background:var(--row-hover)}
+.notes{
+  min-width:320px;
+  white-space:pre-wrap;
+  color:#111827;
+}
 
 /* =========================
    Code activité (rouge, non gras) + Intitulé mis en évidence
    ========================= */
 td.col-code{
   color: var(--danger);
-  font-weight:400;
-  white-space:nowrap;
+  font-weight:400;            /* non gras */
+  white-space:nowrap;         /* code sur une ligne */
 }
+
 td.col-title{
   font-weight:900;
   color:#0B1F2A;
@@ -239,6 +265,7 @@ td.col-title{
   color:var(--muted);
   margin-top:2px;
   font-weight:600;
+  white-space:normal;
 }
 
 /* =========================
@@ -251,6 +278,7 @@ td.col-title{
   font-size:var(--fs-xs);
   border:1px solid rgba(17,24,39,.12);
   background:#fff;
+  white-space:nowrap;
 }
 .badge--danger{border-color:rgba(239,68,68,.55);color:var(--danger)}
 .badge--success{border-color:rgba(34,197,94,.55);color:var(--success)}
@@ -264,6 +292,7 @@ td.col-title{
   display:flex;
   align-items:center;
   gap:8px;
+  width:100%;
 }
 .progress-track{
   flex:1;
@@ -272,6 +301,7 @@ td.col-title{
   background:#EEF2F7;
   border:1px solid rgba(17,24,39,.08);
   overflow:hidden;
+  min-width:0;               /* évite débordement */
 }
 .progress-bar{
   height:100%;
@@ -282,8 +312,9 @@ td.col-title{
 .progress-val{
   font-size:11px;
   color:var(--muted);
-  width:42px;
+  width:44px;
   text-align:right;
+  flex:0 0 auto;
 }
 .progress--empty .progress-bar{width:0%}
 
@@ -297,22 +328,19 @@ td.col-title{
 }
 
 /* Largeurs stables */
-#tbl th.th-code, #tbl td.col-code{ width: 190px; }
-#tbl th.th-title, #tbl td.col-title{ width: 360px; }
-#tbl th.th-pct, #tbl td.col-pct{ width: 210px; }
-
-/* Empêche le débordement qui casse l’alignement */
-#tbl td, #tbl th{
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+#tbl th.th-code, #tbl td.col-code{ width:190px; }
+#tbl th.th-title, #tbl td.col-title{ width:360px; }
+#tbl th.th-pct,  #tbl td.col-pct{  width:210px; }
 
 /* Colonne % : alignement visuel */
 #tbl th.th-pct{ text-align:left; }
-#tbl td.col-pct{ vertical-align: middle; }
+#tbl td.col-pct{
+  vertical-align:middle;
+  white-space:normal;         /* autorise wrap si nécessaire */
+}
 
 /* Progress bar : ne doit jamais dépasser la colonne % */
-#tbl td.col-pct .progress{ min-width: 0; width:100%; }
+#tbl td.col-pct .progress{ min-width:0; width:100%; }
 #tbl td.col-pct .progress-track{ width:100%; }
 
 /* =========================
@@ -334,19 +362,26 @@ canvas{width:100%;height:280px}
 .card.chart canvas{height:300px}
 
 /* =========================
-   Top activités à risque (riskTbl)
+   Top activités à risque (riskTbl) - scroll + texte complet
    ========================= */
 #riskTbl{
+  table-layout: fixed;
   width:100%;
   border-collapse:separate;
   border-spacing:0;
-  min-width:900px;
+  min-width:1050px;
 }
+
 #riskTbl th, #riskTbl td{
   padding:8px 9px;
   font-size:12px;
   border-bottom:1px solid var(--border);
+  overflow:visible;
+  text-overflow:clip;
+  white-space:normal;
+  word-break:break-word;
 }
+
 #riskTbl th{
   background:var(--table-head);
   border-bottom:1px solid var(--table-head-border);
@@ -357,9 +392,27 @@ canvas{width:100%;height:280px}
   top:0;
   z-index:2;
 }
+
 #riskTbl tbody tr:hover{background:var(--row-hover)}
 #riskTbl td.col-code{ color: var(--danger); font-weight:400; white-space:nowrap; }
 #riskTbl td.col-title{ font-weight:900; }
+
+/* =========================================================
+   Optionnel : figer la première colonne (code) sur scroll horizontal
+   Activez si utile (sinon laissez)
+   ========================================================= */
+/*
+#tbl th.th-code, #tbl td.col-code,
+#riskTbl th:first-child, #riskTbl td:first-child{
+  position:sticky;
+  left:0;
+  z-index:3;
+  background:#fff;
+}
+#tbl th.th-code{
+  background:var(--table-head);
+}
+*/
 
 /* =========================
    Responsive
