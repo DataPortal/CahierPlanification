@@ -3,13 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Agenda – Activités planifiées</title>
+  <title>Agenda – Activités planifiées | ONU Femmes RDC</title>
+
+  <!-- Style principal -->
   <link rel="stylesheet" href="assets/style.css" />
+
+  <!-- Anti-cache (recommandé GitHub Pages) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 </head>
+
 <body>
+  <!-- =====================================================
+       HEADER / BANDEAU
+       ===================================================== -->
   <header class="topbar">
-    <div class="container">
-      <h1>Agenda des activités – ONU Femmes RDC</h1>
+    <div class="container topbarRow">
+      <div>
+        <h1>Agenda des activités – ONU Femmes RDC</h1>
+        <div class="subhead">Planification & suivi opérationnel</div>
+      </div>
+
       <nav class="nav">
         <a class="active" href="./index.html">Tableau</a>
         <a href="./dashboard.html">Dashboard</a>
@@ -17,83 +32,115 @@
     </div>
   </header>
 
+  <!-- =====================================================
+       CONTENU PRINCIPAL
+       ===================================================== -->
   <main class="container">
+
+    <!-- =====================
+         FILTRES
+         ===================== -->
     <section class="filters card">
       <h2>Filtres & recherche</h2>
 
+      <!-- Ligne 1 -->
       <div class="grid">
         <div>
-          <label>Recherche</label>
-          <input id="q" type="search" placeholder="code, titre, bureau, pilier, suivi..." />
+          <label for="q">Recherche</label>
+          <input
+            id="q"
+            type="search"
+            placeholder="Code, activité, bureau, pilier, statut, suivi…"
+          />
         </div>
+
         <div>
-          <label>Pilier</label>
+          <label for="pilier">Pilier</label>
           <select id="pilier"></select>
         </div>
+
         <div>
-          <label>Bureau</label>
+          <label for="bureau">Bureau</label>
           <select id="bureau"></select>
         </div>
+
         <div>
-          <label>Statut (planif)</label>
+          <label for="statutPlanif">Statut (planification)</label>
           <select id="statutPlanif"></select>
         </div>
+
         <div>
-          <label>Statut (suivi)</label>
+          <label for="statutSuivi">Statut (suivi)</label>
           <select id="statutSuivi"></select>
         </div>
       </div>
 
-      <div class="grid" style="margin-top:10px">
+      <!-- Ligne 2 -->
+      <div class="grid" style="margin-top:12px">
         <div>
-          <label>Début (du)</label>
+          <label for="from">Date de début (du)</label>
           <input id="from" type="date" />
         </div>
+
         <div>
-          <label>Début (au)</label>
+          <label for="to">Date de début (au)</label>
           <input id="to" type="date" />
         </div>
+
         <div>
-          <label>Afficher</label>
+          <label for="scope">Afficher</label>
           <select id="scope">
-            <option value="all">Tout</option>
-            <option value="overdue">En retard</option>
+            <option value="all">Toutes les activités</option>
+            <option value="overdue">Activités en retard</option>
             <option value="withFollowup">Avec commentaire de suivi</option>
           </select>
         </div>
+
         <div class="actions" style="grid-column: span 2;">
-          <button id="reset" class="btn">Réinitialiser</button>
+          <button id="reset" class="btn" type="button">
+            Réinitialiser
+          </button>
           <span id="meta" class="muted"></span>
         </div>
       </div>
     </section>
 
+    <!-- =====================
+         TABLEAU PRINCIPAL
+         ===================== -->
     <section class="card">
       <h2>Activités planifiées & suivi</h2>
-      <div class="table-wrap">
-        <table id="tbl">
-        <thead>
-        <tr>
-        <th class="th-code">Code</th>
-        <th class="th-title">Activité</th>
-        <th>Unités</th>
-        <th>Début</th>
-        <th>Fin</th>
-        <th>Statut planif</th>
-        <th>Statut suivi</th>
-        <th class="th-pct">%</th>
-        <th>Commentaire de suivi</th>
-        <th>Validation</th>
-        <th>Maj</th>
-        </tr>
-        </thead>
 
-          <tbody></tbody>
+      <div class="table-wrap">
+        <table id="tbl" aria-describedby="meta">
+          <thead>
+            <tr>
+              <th class="th-code">Code</th>
+              <th class="th-title">Activité</th>
+              <th>Unités impliquées</th>
+              <th>Début</th>
+              <th>Fin</th>
+              <th>Statut planif</th>
+              <th>Statut suivi</th>
+              <th class="th-pct">%</th>
+              <th>Commentaire de suivi</th>
+              <th>Validation</th>
+              <th>Dernière mise à jour</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <!-- Généré dynamiquement par app-table.js -->
+          </tbody>
         </table>
       </div>
     </section>
+
   </main>
 
+  <!-- =====================================================
+       SCRIPTS
+       ===================================================== -->
   <script src="assets/utils.js"></script>
   <script src="assets/app-table.js"></script>
 </body>
