@@ -1,22 +1,34 @@
 :root{
-  --bg:#f6f7fb;
-  --card:#ffffff;
-  --text:#1f2330;
-  --muted:#6b7280;
-  --border:#e5e7eb;
-  --shadow:0 8px 24px rgba(16,24,40,.08);
+  /* UN Women branding (proche) */
+  --unw-blue:#00A3E0;          /* bleu bandeau */
+  --unw-blue-dark:#0077A3;
+  --unw-orange:#F58220;        /* accent */
+  --bg:#F5F7FB;
+  --card:#FFFFFF;
+  --text:#111827;
+  --muted:#6B7280;
+  --border:#E5E7EB;
+
+  --shadow:0 10px 28px rgba(16,24,40,.08);
   --radius:14px;
 
-  /* Statuts */
-  --danger:#ef4444;
-  --success:#22c55e;
-  --warning:#f59e0b;
-  --info:#3b82f6;
+  /* Table */
+  --table-head:#E9F6FC;        /* fond entête tableau (bleu très clair) */
+  --table-head-border:#BFE7F7;
+  --row-hover:#F9FAFB;
+
+  /* Status */
+  --danger:#EF4444;
+  --success:#22C55E;
+  --warning:#F59E0B;
+  --info:#3B82F6;
+
+  /* Typo (compact) */
+  --fs-base:13px;
+  --fs-small:12px;
+  --fs-xs:11px;
 }
 
-/* --------------------
-   Base
--------------------- */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -25,211 +37,222 @@ body{
   background:var(--bg);
   color:var(--text);
   line-height:1.45;
+  font-size:var(--fs-base);
 }
 
-.container{
-  max-width:1200px;
-  margin:0 auto;
-  padding:18px;
-}
+/* Layout */
+.container{max-width:1240px;margin:0 auto;padding:16px}
 
-/* --------------------
-   Topbar / Navigation
--------------------- */
+/* =========================
+   Header ONU Femmes (bandeau)
+   ========================= */
 .topbar{
-  background:var(--card);
-  border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg, var(--unw-blue) 0%, var(--unw-blue-dark) 100%);
+  color:#fff;
+  border-bottom:1px solid rgba(255,255,255,.15);
+}
+.topbar .container{
+  padding:14px 16px;
 }
 .topbar h1{
   margin:0;
-  font-size:18px;
-  font-weight:600;
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:.2px;
 }
 
+/* Nav pills */
 .nav{
   margin-top:10px;
   display:flex;
   gap:10px;
+  flex-wrap:wrap;
 }
 .nav a{
-  padding:8px 14px;
-  border:1px solid var(--border);
+  padding:7px 12px;
+  border:1px solid rgba(255,255,255,.22);
   border-radius:999px;
   text-decoration:none;
-  color:var(--text);
-  background:#fff;
-  font-size:13px;
+  color:#fff;
+  background:rgba(255,255,255,.10);
+  font-size:var(--fs-small);
 }
-.nav a:hover{
-  background:#f9fafb;
-}
+.nav a:hover{background:rgba(255,255,255,.16)}
 .nav a.active{
-  font-weight:600;
-  border-color:var(--info);
+  background:#fff;
+  color:var(--unw-blue-dark);
+  border-color:#fff;
+  font-weight:700;
 }
 
-/* --------------------
-   Cards & Layout
--------------------- */
+/* =========================
+   Cards
+   ========================= */
 .card{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
-  padding:16px;
-  margin:14px 0;
+  padding:14px;
+  margin:12px 0;
 }
-
 .card h2{
   margin:0 0 10px;
-  font-size:15px;
-  font-weight:600;
+  font-size:13px;
+  font-weight:800;
+  color:#0B1F2A;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.card h2::before{
+  content:"";
+  width:10px;height:10px;border-radius:99px;
+  background:var(--unw-orange);
+  display:inline-block;
 }
 
-.grid{
+/* Filters */
+.filters .grid{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:12px;
+  grid-template-columns:repeat(5, 1fr);
+  gap:10px;
 }
-.grid-2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-.grid-4{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-
-/* --------------------
-   Forms & Actions
--------------------- */
 label{
   display:block;
-  font-size:12px;
+  font-size:var(--fs-xs);
+  color:rgba(255,255,255,.0); /* reset for table only? keep normal */
+}
+.filters label{
+  display:block;
+  font-size:var(--fs-xs);
   color:var(--muted);
   margin-bottom:6px;
 }
 input,select{
   width:100%;
-  padding:10px 12px;
+  padding:9px 10px;
   border:1px solid var(--border);
   border-radius:12px;
   background:#fff;
-  font-size:13px;
+  font-size:var(--fs-small);
 }
 input:focus,select:focus{
   outline:none;
-  border-color:var(--info);
+  border-color:rgba(0,163,224,.55);
+  box-shadow:0 0 0 3px rgba(0,163,224,.12);
 }
 
 .actions{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-top:12px;
+  margin-top:10px;
+  gap:10px;
 }
-
 .btn{
-  padding:10px 14px;
+  padding:9px 12px;
   border:1px solid var(--border);
   border-radius:12px;
   background:#fff;
   cursor:pointer;
-  font-size:13px;
+  font-size:var(--fs-small);
 }
 .btn:hover{
-  background:#f9fafb;
+  border-color:rgba(0,163,224,.35);
+  box-shadow:0 6px 16px rgba(16,24,40,.06);
 }
+.muted{color:var(--muted);font-size:var(--fs-xs)}
 
-.muted{
-  color:var(--muted);
-  font-size:12px;
-}
-
-/* --------------------
-   Table
--------------------- */
-.table-wrap{overflow:auto}
-
+/* =========================
+   Table (compact + entête colorée)
+   ========================= */
+.table-wrap{overflow:auto;border-radius:12px}
 table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
+  min-width:1050px; /* assure la lisibilité, scroll horizontal si nécessaire */
 }
 th,td{
-  padding:10px 10px;
+  padding:8px 9px;
   border-bottom:1px solid var(--border);
   vertical-align:top;
-  font-size:13px;
+  font-size:var(--fs-small);
 }
 th{
   position:sticky;
   top:0;
-  background:#fff;
-  z-index:1;
+  z-index:2;
   text-align:left;
-  font-weight:600;
+  background:var(--table-head);
+  border-bottom:1px solid var(--table-head-border);
+  font-size:var(--fs-xs);
+  letter-spacing:.2px;
+  text-transform:uppercase;
+  color:#0B1F2A;
 }
-tbody tr:hover{
-  background:#fafafa;
-}
+tbody tr:hover{background:var(--row-hover)}
+.strong{font-weight:800}
+.notes{min-width:260px;white-space:pre-wrap;color:#111827}
+td{color:#111827}
+td:nth-child(1){white-space:nowrap} /* code */
 
-.strong{font-weight:600}
-.notes{
-  min-width:260px;
-  white-space:pre-wrap;
-}
-
-/* --------------------
-   Badges / Statuts
--------------------- */
+/* Badges */
 .badge{
   display:inline-block;
-  padding:4px 10px;
+  padding:3px 9px;
   border-radius:999px;
-  font-size:12px;
-  border:1px solid var(--border);
+  font-size:var(--fs-xs);
+  border:1px solid rgba(17,24,39,.12);
   background:#fff;
 }
+.badge--danger{border-color:rgba(239,68,68,.55);color:var(--danger)}
+.badge--success{border-color:rgba(34,197,94,.55);color:var(--success)}
+.badge--warning{border-color:rgba(245,158,11,.55);color:var(--warning)}
+.badge--info{border-color:rgba(59,130,246,.55);color:var(--info)}
 
-.badge--danger{
-  border-color:var(--danger);
-  color:var(--danger);
-}
-.badge--success{
-  border-color:var(--success);
-  color:var(--success);
-}
-.badge--warning{
-  border-color:var(--warning);
-  color:var(--warning);
-}
-.badge--info{
-  border-color:var(--info);
-  color:var(--info);
-}
+/* =========================
+   Dashboard KPIs (modern + compact)
+   ========================= */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 
-/* --------------------
-   KPIs & Charts
--------------------- */
+.kpi{
+  padding:12px;
+  border-left:6px solid rgba(245,130,32,.85); /* accent orange */
+}
+.kpi .muted{
+  font-size:var(--fs-xs);
+}
 .kpiVal{
-  font-size:28px;
-  font-weight:700;
-  margin-top:8px;
+  font-size:22px;
+  font-weight:900;
+  margin-top:6px;
+  letter-spacing:.2px;
 }
 
+/* Charts: hauteur réduite pour vue optimale */
 canvas{
   width:100%;
-  height:360px;
+  height:280px;
+}
+.card.chart canvas{
+  height:300px;
 }
 
-/* --------------------
-   Responsive
--------------------- */
-@media (max-width: 980px){
-  .grid{grid-template-columns:1fr 1fr}
+/* Responsive */
+@media (max-width: 1100px){
+  .filters .grid{grid-template-columns:1fr 1fr 1fr}
+}
+@media (max-width: 900px){
+  .filters .grid{grid-template-columns:1fr 1fr}
   .grid-2{grid-template-columns:1fr}
   .grid-4{grid-template-columns:1fr 1fr}
+  canvas{height:260px}
+}
+@media (max-width: 520px){
+  .grid-4{grid-template-columns:1fr}
+  .topbar .container{padding:12px}
+  .nav a{padding:7px 10px}
 }
