@@ -3,7 +3,8 @@ name: Sync Kobo Data
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"   # toutes les 5 minutes (GitHub = 5 champs)
+    # GitHub Actions cron = 5 champs (minute heure jour mois jour-semaine)
+    - cron: "*/5 * * * *"  # toutes les 5 minutes
 
 permissions:
   contents: write
@@ -30,8 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-        # Si vous n'avez pas requirements.txt, remplacez par:
-        # run: pip install requests python-dateutil
 
       - name: Fetch Kobo submissions
         env:
