@@ -18,40 +18,47 @@
   </header>
 
   <main class="container">
-    <!-- Filtres -->
     <section class="filters card">
       <h2>Filtres & recherche</h2>
 
       <div class="grid">
         <div>
           <label>Recherche</label>
-          <input id="q" type="search" placeholder="code, activité, objectif, livrable, bureau, pilier..." />
-        </div>
-        <div>
-          <label>Pilier</label>
-          <select id="pilier"></select>
+          <input id="q" type="search" placeholder="code, activité, bureau, pilier, risque, responsable..." />
         </div>
         <div>
           <label>Bureau</label>
           <select id="bureau"></select>
         </div>
         <div>
-          <label>Statut (planif)</label>
+          <label>Pilier</label>
+          <select id="pilier"></select>
+        </div>
+        <div>
+          <label>Risque / Priorité</label>
+          <select id="risque"></select>
+        </div>
+        <div>
+          <label>Type d’activité</label>
+          <select id="typeActivite"></select>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:10px">
+        <div>
+          <label>Statut (planificateur)</label>
           <select id="statutPlanif"></select>
         </div>
         <div>
           <label>Statut (suivi)</label>
           <select id="statutSuivi"></select>
         </div>
-      </div>
-
-      <div class="grid" style="margin-top:10px">
         <div>
-          <label>Début (du)</label>
+          <label>Date de début (du)</label>
           <input id="from" type="date" />
         </div>
         <div>
-          <label>Début (au)</label>
+          <label>Date de début (au)</label>
           <input id="to" type="date" />
         </div>
         <div>
@@ -59,32 +66,33 @@
           <select id="scope">
             <option value="all">Tout</option>
             <option value="overdue">En retard</option>
+            <option value="risk">À risque (Élevée/Critique)</option>
             <option value="withFollowup">Avec commentaire de suivi</option>
           </select>
         </div>
-        <div class="actions" style="grid-column: span 2;">
+
+        <div class="actions" style="grid-column: span 5;">
           <button id="reset" class="btn" type="button">Réinitialiser</button>
           <span id="meta" class="muted"></span>
         </div>
       </div>
     </section>
 
-    <!-- Tableau -->
     <section class="card">
       <h2>Activités planifiées & suivi</h2>
 
       <div class="table-wrap">
-        <table id="tbl" class="tbl-wide">
+        <table id="tbl">
           <thead>
             <tr>
-              <!-- Vos colonnes retenues (toutes) -->
-              <th class="th-title">Activité (titre court)</th>
-              <th class="th-obj">Objectif(s) de l’activité</th>
-              <th class="th-livrable">Livrable attendu</th>
-              <th class="th-type">Type d’activité</th>
-              <th class="th-pilier">Pilier ONU Femmes</th>
+              <!-- Ordre EXACT demandé -->
               <th class="th-code">code_activite</th>
               <th class="th-bureau">Bureau ONU Femmes (RDC)</th>
+              <th class="th-pilier">Pilier ONU Femmes</th>
+              <th class="th-title">Activité (titre court)</th>
+              <th class="th-type">Type d’activité</th>
+              <th class="th-obj">Objectif(s) de l’activité</th>
+              <th class="th-livrable">Livrable attendu</th>
               <th class="th-risque">Risque/Priorité</th>
               <th class="th-date">Date de début</th>
               <th class="th-date">Date de fin</th>
@@ -102,14 +110,10 @@
           <tbody></tbody>
         </table>
       </div>
-
-      <div class="muted" style="margin-top:8px">
-        Astuce : utilisez la barre de défilement horizontale pour voir toutes les colonnes.
-      </div>
     </section>
   </main>
 
-  <!-- Scripts -->
+  <!-- utils.js optionnel : si vous l’utilisez ailleurs, sinon vous pouvez l’enlever -->
   <script src="assets/utils.js"></script>
   <script src="assets/col-resize.js"></script>
   <script src="assets/app-table.js"></script>
