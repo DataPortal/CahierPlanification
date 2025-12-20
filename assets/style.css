@@ -472,4 +472,23 @@ th:hover .col-resizer::before{
   cursor: col-resize !important;
   user-select:none !important;
 }
+/* ===== Affichage complet du contenu (pas d'ellipsis) ===== */
+#tbl td, #tbl th{
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;   /* casse intelligente des longues chaînes */
+  word-break: break-word;    /* fallback */
+}
+
+/* le scroll reste assuré par le wrapper */
+.table-wrap{
+  overflow: auto;
+}
+
+/* Optionnel: confort de lecture (lignes plus hautes) */
+#tbl td{
+  line-height: 1.35;
+}
+
 
