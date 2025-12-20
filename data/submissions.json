@@ -222,7 +222,12 @@
       "_submission_time": "2025-12-20T14:19:00",
       "_tags": [],
       "_notes": [],
-      "_validation_status": {},
+      "_validation_status": {
+        "timestamp": 1766240493,
+        "uid": "validation_status_on_hold",
+        "by_whom": "minsup",
+        "label": "On Hold"
+      },
       "_submitted_by": null
     }
   ]
