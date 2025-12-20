@@ -1,7 +1,4 @@
 (async function () {
-  // =====================================================
-  // 1) Charger les activités normalisées
-  // =====================================================
   let data;
   try {
     data = await fetch("./data/activities.json", { cache: "no-store" }).then(r => {
@@ -14,9 +11,6 @@
     return;
   }
 
-  // =====================================================
-  // 2) DOM
-  // =====================================================
   const $ = (id) => document.getElementById(id);
 
   const elQ = $("q");
@@ -31,15 +25,11 @@
   const elMeta = $("meta");
   const tbody = document.querySelector("#tbl tbody");
 
-  // Guard (évite crash si mauvais fichier HTML)
   if (!tbody || !elMeta || !elReset) {
     console.error("DOM table elements missing. This script must run on index.html.");
     return;
   }
 
-  // =====================================================
-  // 3) Utils
-  // =====================================================
   const esc = (v) =>
     (v == null ? "" : String(v))
       .replace(/&/g, "&amp;")
@@ -59,21 +49,14 @@
       values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
   }
 
-  function isOverdue(r) {
-    return r.overdue === 1;
-  }
+  function isOverdue(r) { return r.overdue === 1; }
 
-  // =====================================================
-  // 4) Filtres
-  // =====================================================
+  // Filtres
   fillSelect(elPilier, uniq(data.map(d => d.pilier)), "Tous les piliers");
   fillSelect(elBureau, uniq(data.map(d => d.bureau)), "Tous les bureaux");
   fillSelect(elStatutPlanif, uniq(data.map(d => d.statut_planificateur)), "Tous statuts (planif)");
   fillSelect(elStatutSuivi, uniq(data.map(d => d.statut_suivi)), "Tous statuts (suivi)");
 
-  // =====================================================
-  // 5) Filtrage
-  // =====================================================
   function apply() {
     const q = (elQ?.value || "").toLowerCase().trim();
     const pilier = elPilier?.value || "";
@@ -101,10 +84,13 @@
       const blob = [
         r.code_activite,
         r.titre,
+        r.objectif,
+        r.livrable_attendu,
         r.type_activite,
         r.pilier,
         r.bureau,
-        (r.unites_impliquees || []).join(" "),
+        r.risque_priorite,
+        r.responsable,
         r.statut_planificateur,
         r.statut_suivi,
         r.commentaire_suivi,
@@ -119,14 +105,9 @@
     elMeta.textContent = `${filtered.length} activité(s) sur ${data.length}`;
   }
 
-  // =====================================================
-  // 6) Rendu tableau
-  // =====================================================
   function render(rows) {
     const sorted = rows.slice().sort((a, b) => {
-      if (a.date_debut !== b.date_debut) {
-        return (a.date_debut || "").localeCompare(b.date_debut || "");
-      }
+      if (a.date_debut !== b.date_debut) return (a.date_debut || "").localeCompare(b.date_debut || "");
       return (a.code_activite || "").localeCompare(b.code_activite || "");
     });
 
@@ -135,16 +116,13 @@
       const maj = r.date_mise_a_jour || r.submission_time || "";
 
       // Progress bar %
-      const rawPct = r.avancement_pct;
-      const pctNum = (rawPct === null || rawPct === undefined || rawPct === "")
+      const pctNum = (r.avancement_pct === null || r.avancement_pct === undefined || r.avancement_pct === "")
         ? null
-        : Number(rawPct);
+        : Number(r.avancement_pct);
 
       let progressHTML = `
         <div class="progress progress--empty">
-          <div class="progress-track">
-            <div class="progress-bar" style="width:0%"></div>
-          </div>
+          <div class="progress-track"><div class="progress-bar" style="width:0%"></div></div>
           <div class="progress-val">—</div>
         </div>`;
 
@@ -152,12 +130,25 @@
         const pct = Math.max(0, Math.min(100, Math.round(pctNum)));
         progressHTML = `
           <div class="progress">
-            <div class="progress-track">
-              <div class="progress-bar" style="width:${pct}%"></div>
-            </div>
+            <div class="progress-track"><div class="progress-bar" style="width:${pct}%"></div></div>
             <div class="progress-val">${pct}%</div>
           </div>`;
       }
+
+      // Sous-ligne: bureau/pilier/type + risque + responsable
+      const metaLine = [
+        r.type_activite || "",
+        r.bureau || "",
+        r.pilier || "",
+        r.risque_priorite ? `Risque: ${r.risque_priorite}` : "",
+        r.responsable ? `Resp: ${r.responsable}` : ""
+      ].filter(Boolean).join(" • ");
+
+      // Objectif + livrable en “detail”
+      const detailLine = [
+        r.objectif ? `Objectif: ${r.objectif}` : "",
+        r.livrable_attendu ? `Livrable: ${r.livrable_attendu}` : ""
+      ].filter(Boolean).join(" | ");
 
       return `
         <tr>
@@ -165,36 +156,30 @@
 
           <td class="col-title">
             ${esc(r.titre || "")}
-            <span class="cell-sub">
-              ${esc(r.type_activite || "")} • ${esc(r.bureau || "")} • ${esc(r.pilier || "")}
-            </span>
+            <span class="cell-sub">${esc(metaLine)}</span>
+            ${detailLine ? `<span class="cell-detail">${esc(detailLine)}</span>` : ``}
           </td>
 
-          <td>${esc((r.unites_impliquees || []).join("; "))}</td>
-          <td>${esc(r.date_debut || "")}</td>
-          <td>${esc(r.date_fin || "")}</td>
+          <td class="col-date">${esc(r.date_debut || "")}</td>
+          <td class="col-date">${esc(r.date_fin || "")}</td>
 
-          <td>
-            <span class="badge${overdueClass}">
-              ${esc(r.statut_planificateur || "")}
-            </span>
+          <td class="col-status">
+            <span class="badge${overdueClass}">${esc(r.statut_planificateur || "")}</span>
           </td>
 
-          <td>${esc(r.statut_suivi || "")}</td>
+          <td class="col-status">${esc(r.statut_suivi || "")}</td>
 
           <td class="col-pct">${progressHTML}</td>
 
           <td class="notes">${esc(r.commentaire_suivi || "")}</td>
-          <td>${esc(r.validation || "")}</td>
-          <td>${esc(maj)}</td>
+
+          <td class="col-valid">${esc(r.validation || "")}</td>
+          <td class="col-maj">${esc(maj)}</td>
         </tr>
       `;
     }).join("");
   }
 
-  // =====================================================
-  // 7) Events
-  // =====================================================
   [elQ, elPilier, elBureau, elStatutPlanif, elStatutSuivi, elFrom, elTo, elScope]
     .filter(Boolean)
     .forEach(el => {
@@ -214,15 +199,12 @@
     apply();
   });
 
-  // 1er rendu
   apply();
 
-  // =====================================================
-  // 8) Activer le drag & resize des colonnes (IMPORTANT)
-  // =====================================================
+  // Resize colonnes
   if (window.enableColumnResize) {
     window.enableColumnResize("#tbl", { minPx: 80 });
   } else {
-    console.warn("enableColumnResize not found. Check that assets/col-resize.js is loaded before app-table.js");
+    console.warn("enableColumnResize not found. Load assets/col-resize.js before app-table.js");
   }
 })();
