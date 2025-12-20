@@ -183,9 +183,7 @@
 
           <td class="col-title">
             ${esc(r.titre || "")}
-            <span class="cell-sub">${esc(r.type_activite || "")} • ${esc(r.risque_priorite || "")} • ${esc(r.responsable || "")}</span>
           </td>
-
           <td>${esc(r.type_activite || "")}</td>
           <td>${esc(r.objectif || "")}</td>
           <td>${esc(r.livrable_attendu || "")}</td>
