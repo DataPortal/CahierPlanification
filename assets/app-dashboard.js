@@ -18,7 +18,6 @@
   }
 
   const esc = window.escHTML || ((v) => (v == null ? "" : String(v)));
-
   const $ = (id) => document.getElementById(id);
 
   // KPIs
@@ -40,17 +39,81 @@
   // -------------------------
   // Utils
   // -------------------------
-  function isOverdue(r) {
-    return r && r.overdue === 1;
+  function num(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
   }
 
   function hasFollowup(r) {
     return !!(r && String(r.commentaire_suivi || "").trim());
   }
 
-  function num(v) {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
+  function normalizeText(v) {
+    return String(v || "").trim();
+  }
+
+  function normalizeStatusSuivi(v) {
+    const t = normalizeText(v);
+    const low = t.toLowerCase();
+
+    if (!t) return "";
+    if (low.includes("retard")) return "Retard";
+    if (low.includes("annul")) return "Annulée";
+    if (low.includes("report")) return "Reportée";
+    return t;
+  }
+
+  function isDoneLike(statusAny) {
+    const low = String(statusAny || "").toLowerCase();
+    return (
+      low.includes("final") ||
+      low.includes("clôt") ||
+      low.includes("clot") ||
+      low.includes("termin") ||
+      low.includes("achev") ||
+      low.includes("done") ||
+      low.includes("complete") ||
+      low.includes("complét")
+    );
+  }
+
+  function isCancelledLike(statusSuivi) {
+    const low = String(statusSuivi || "").toLowerCase();
+    return low.includes("annul");
+  }
+
+  function isReportedLike(statusSuivi) {
+    const low = String(statusSuivi || "").toLowerCase();
+    return low.includes("report");
+  }
+
+  function isLateStatus(statusSuivi) {
+    const low = String(statusSuivi || "").toLowerCase();
+    return low.includes("retard");
+  }
+
+  function isOverdueByDate(dateFinISO, statusSuivi, statusPlanif) {
+    if (!dateFinISO) return false;
+    const d = new Date(dateFinISO.slice(0, 10) + "T00:00:00");
+    if (Number.isNaN(d.getTime())) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const combined = `${statusSuivi || ""} ${statusPlanif || ""}`;
+    // Si finalisée/terminée, pas en retard même si date dépassée
+    if (isDoneLike(combined)) return false;
+
+    return d < today;
+  }
+
+  function riskPriorityRank(p) {
+    const t = String(p || "").toLowerCase();
+    if (t.includes("criti")) return 4;
+    if (t.includes("élev") || t.includes("eleve")) return 3;
+    if (t.includes("moy")) return 2;
+    if (t.includes("faib")) return 1;
+    return 0;
   }
 
   function groupCount(rows, keyFn) {
@@ -65,8 +128,6 @@
   // ---- Trend weekly (ISO week) ----
   function isoWeekKey(isoDate) {
     if (!isoDate) return null;
-
-    // Parse "YYYY-MM-DD" safely in local time
     const parts = String(isoDate).slice(0, 10).split("-");
     if (parts.length !== 3) return null;
 
@@ -75,18 +136,13 @@
     const d = Number(parts[2]);
     if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
 
-    // UTC date for ISO week math
     const date = new Date(Date.UTC(y, m - 1, d));
     if (Number.isNaN(date.getTime())) return null;
 
-    // ISO week algorithm
-    // Thursday in current week decides the year
     const day = date.getUTCDay() || 7; // Mon=1..Sun=7
     date.setUTCDate(date.getUTCDate() + 4 - day);
 
     const isoYear = date.getUTCFullYear();
-
-    // Week 1 is the week with Jan 4th
     const yearStart = new Date(Date.UTC(isoYear, 0, 1));
     const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
 
@@ -94,31 +150,28 @@
     return `${isoYear}-W${ww}`;
   }
 
-  // priorité risque pour tri
-  function priorityRank(p) {
-    const t = String(p || "").toLowerCase();
-    if (t.includes("criti")) return 4;
-    if (t.includes("élev") || t.includes("eleve")) return 3;
-    if (t.includes("moy")) return 2;
-    if (t.includes("faib")) return 1;
-    return 0;
-  }
-
   // -------------------------
   // KPIs (inchangé)
   // -------------------------
   const total = data.length;
-  const overdue = data.filter(isOverdue).length;
+
+  const overdueCount = data.filter((r) =>
+    isOverdueByDate(r.date_fin, r.statut_suivi, r.statut_planificateur) ||
+    isLateStatus(r.statut_suivi)
+  ).length;
+
   const withFollowup = data.filter(hasFollowup).length;
 
   const pctValues = data
     .map((r) => num(r.avancement_pct))
     .filter((x) => x !== null);
 
-  const avg = pctValues.length ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length) : null;
+  const avg = pctValues.length
+    ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length)
+    : null;
 
   if (elTotal) elTotal.textContent = String(total);
-  if (elOverdue) elOverdue.textContent = String(overdue);
+  if (elOverdue) elOverdue.textContent = String(overdueCount);
   if (elWithFollowup) elWithFollowup.textContent = String(withFollowup);
   if (elAvg) elAvg.textContent = avg === null ? "—" : `${avg}%`;
 
@@ -145,9 +198,9 @@
         maintainAspectRatio: false,
         scales: {
           x: { ticks: { maxRotation: 30, minRotation: 0 } },
-          y: { beginAtZero: true, precision: 0 }
-        }
-      }
+          y: { beginAtZero: true, precision: 0 },
+        },
+      },
     });
   }
 
@@ -159,8 +212,8 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true, precision: 0 } }
-      }
+        scales: { y: { beginAtZero: true, precision: 0 } },
+      },
     });
   }
 
@@ -171,7 +224,7 @@
   makeBarChart(ctxStatutPlanif, groupCount(data, (r) => r.statut_planificateur), "Activités");
 
   // -------------------------
-  // Trend weekly (date_debut)  ✅ MODIF ICI
+  // Trend weekly (date_debut)
   // -------------------------
   const byWeek = new Map();
   data.forEach((r) => {
@@ -185,25 +238,55 @@
   makeLineChart(ctxTrend, trendLabels, trendValues, "Activités");
 
   // -------------------------
-  // Top activités à risque (inchangé)
+  // Top activités en retard / à risque  ✅ MODIFIÉ
+  // Critères de risque:
+  //  1) date_fin dépassée (si pas finalisée)
+  //  2) statut_suivi = Retard / Annulée / Reportée
+  //  3) priorité (Critique > Élevée > Moyenne > Faible)
+  //  4) date_fin la plus proche
   // -------------------------
+  function riskScore(r) {
+    const stSuivi = normalizeStatusSuivi(r.statut_suivi);
+    const stPlan = normalizeText(r.statut_planificateur);
+
+    const overdueDate = isOverdueByDate(r.date_fin, stSuivi, stPlan);
+    const late = isLateStatus(stSuivi);
+    const cancelled = isCancelledLike(stSuivi);
+    const reported = isReportedLike(stSuivi);
+
+    // pondérations
+    let score = 0;
+    if (overdueDate) score += 100;
+    if (late) score += 90;
+    if (cancelled) score += 70;
+    if (reported) score += 60;
+
+    // priorité comme renfort
+    score += riskPriorityRank(r.risque_priorite) * 10;
+
+    // si finalisée, on rabaisse fortement
+    if (isDoneLike(`${stSuivi} ${stPlan}`)) score -= 200;
+
+    return score;
+  }
+
   if (riskBody) {
     const top = data
       .slice()
       .sort((a, b) => {
-        // 1) overdue d'abord
-        const oa = isOverdue(a) ? 1 : 0;
-        const ob = isOverdue(b) ? 1 : 0;
-        if (oa !== ob) return ob - oa;
+        const sa = riskScore(a);
+        const sb = riskScore(b);
+        if (sa !== sb) return sb - sa;
 
-        // 2) priorité risque
-        const ra = priorityRank(a.risque_priorite);
-        const rb = priorityRank(b.risque_priorite);
-        if (ra !== rb) return rb - ra;
+        // tie-breaker: date_fin la plus proche
+        const da = a.date_fin || "9999-12-31";
+        const db = b.date_fin || "9999-12-31";
+        if (da !== db) return da.localeCompare(db);
 
-        // 3) date_fin la plus proche
-        return (a.date_fin || "9999-12-31").localeCompare(b.date_fin || "9999-12-31");
+        // puis code
+        return (a.code_activite || "").localeCompare(b.code_activite || "");
       })
+      .filter((r) => riskScore(r) > 0) // ne garder que de vrais risques
       .slice(0, 12);
 
     riskBody.innerHTML = top
@@ -211,13 +294,17 @@
         const pct = num(r.avancement_pct);
         const pctTxt = pct === null ? "—" : `${Math.round(pct)}%`;
 
+        const statutSuivi = normalizeStatusSuivi(r.statut_suivi);
+        const statutSuiviShow = statutSuivi || "—";
+
         return `
           <tr>
             <td class="col-code">${esc(r.code_activite || "")}</td>
             <td class="col-title">${esc(r.titre || "")}</td>
+            <td>${esc(r.responsable || "")}</td>
             <td>${esc(r.date_debut || "")}</td>
             <td>${esc(r.date_fin || "")}</td>
-            <td>${esc(r.risque_priorite || (isOverdue(r) ? "En retard" : ""))}</td>
+            <td>${esc(statutSuiviShow)}</td>
             <td>${esc(pctTxt)}</td>
           </tr>
         `;
