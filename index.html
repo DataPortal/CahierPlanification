@@ -3,41 +3,47 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Agenda – Activités planifiées</title>
+  <title>Tableau dynamique des Activités | ONU FEMMES RDC</title>
+
+  <!-- Recommandé: limiter les soucis de cache GitHub Pages -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="stylesheet" href="assets/style.css" />
 </head>
+
 <body>
-<header class="topbar">
-  <div class="container topbar-inner">
-    
-    <!-- Titre à gauche -->
-    <h1>Suivi des activités</h1>
+  <!-- Bandeau conforme à dashboard.html : logo gauche / titre centré / nav droite -->
+  <header class="topbar">
+    <div class="container topbarBar">
+      <!-- Logo ONU Femmes à gauche -->
+      <a
+        href="https://africa.unwomen.org/fr/where-we-are/west-and-central-africa/democratic-republic-of-congo"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="brand-link"
+        title="ONU Femmes – RDC"
+      >
+        <img
+          src="assets/img/unwomen-logo.png"
+          alt="ONU Femmes – République Démocratique du Congo"
+          class="brand-logo"
+        />
+      </a>
 
-    <!-- Logo ONU Femmes à droite -->
-    <a
-      href="https://africa.unwomen.org/fr/where-we-are/west-and-central-africa/democratic-republic-of-congo"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="brand-link"
-      title="ONU Femmes – RDC"
-    >
-      <img
-        src="assets/img/unwomen-logo.png"
-        alt="ONU Femmes – République Démocratique du Congo"
-        class="brand-logo"
-      />
-    </a>
+      <!-- Titre centré -->
+      <div class="topbarTitleWrap">
+        <h1 class="topbarTitle">Suivi des activités</h1>
+      </div>
 
-  </div>
-
-  <!-- Navigation reste inchangée -->
-  <div class="container">
-    <nav class="nav">
-      <a href="./index.html">Tableau</a>
-      <a class="active" href="./dashboard.html">Dashboard</a>
-    </nav>
-  </div>
-</header>
+      <!-- Navigation à droite -->
+      <nav class="nav topbarNav" aria-label="Navigation principale">
+        <a class="active" href="./index.html">Tableau</a>
+        <a href="./dashboard.html">Dashboard</a>
+      </nav>
+    </div>
+  </header>
 
   <main class="container">
     <section class="filters card">
@@ -45,44 +51,52 @@
 
       <div class="grid">
         <div>
-          <label>Recherche</label>
+          <label for="q">Recherche</label>
           <input id="q" type="search" placeholder="code, titre, bureau, pilier, responsable, risque..." />
         </div>
+
         <div>
-          <label>Bureau</label>
+          <label for="bureau">Bureau</label>
           <select id="bureau"></select>
         </div>
+
         <div>
-          <label>Pilier</label>
+          <label for="pilier">Pilier</label>
           <select id="pilier"></select>
         </div>
+
         <div>
-          <label>Type d’activité</label>
+          <label for="typeAct">Type d’activité</label>
           <select id="typeAct"></select>
         </div>
+
         <div>
-          <label>Risque / Priorité</label>
+          <label for="risque">Risque / Priorité</label>
           <select id="risque"></select>
         </div>
       </div>
 
       <div class="grid" style="margin-top:10px">
         <div>
-          <label>Statut (planificateur)</label>
+          <label for="statutPlanif">Statut (planificateur)</label>
           <select id="statutPlanif"></select>
         </div>
+
         <div>
-          <label>Statut de suivi</label>
+          <label for="statutSuivi">Statut de suivi</label>
           <select id="statutSuivi"></select>
         </div>
+
         <div>
-          <label>Date de début (du)</label>
+          <label for="from">Date de début (du)</label>
           <input id="from" type="date" />
         </div>
+
         <div>
-          <label>Date de début (au)</label>
+          <label for="to">Date de début (au)</label>
           <input id="to" type="date" />
         </div>
+
         <div class="actions" style="grid-column: span 1;">
           <button id="reset" class="btn" type="button">Réinitialiser</button>
           <span id="meta" class="muted"></span>
