@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard – Activités | ONU Femmes RDC</title>
 
-  <!-- Anti-cache GitHub Pages (utile en phase de mise au point) -->
+  <!-- Recommandé: limiter les soucis de cache GitHub Pages -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -14,17 +14,9 @@
 </head>
 
 <body>
-  <!-- =====================================================
-       HEADER / BANDEAU
-       ===================================================== -->
   <header class="topbar">
-    <div class="container topbarRow">
-      <div>
-        <h1>Dashboard – Suivi des activités</h1>
-        <!-- optionnel (si vous l’alimentez dans app-dashboard.js) -->
-        <div class="subhead" id="lastUpdate">Dernière mise à jour : —</div>
-      </div>
-
+    <div class="container">
+      <h1>Dashboard – Suivi des activités</h1>
       <nav class="nav">
         <a href="./index.html">Tableau</a>
         <a class="active" href="./dashboard.html">Dashboard</a>
@@ -32,120 +24,82 @@
     </div>
   </header>
 
-  <!-- =====================================================
-       CONTENU PRINCIPAL
-       ===================================================== -->
   <main class="container">
 
+    <!-- ✅ TOP ACTIVITÉS À RISQUE (déplacé sous le bandeau) -->
+    <section class="card">
+      <h2>Top activités en retard / à risque</h2>
+      <div class="table-wrap">
+        <table id="riskTbl">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Activité</th>
+              <th>Responsable</th>
+              <th>Début</th>
+              <th>Fin</th>
+              <th>Statut de suivi</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- KPIs -->
-    <section class="kpis grid-4" aria-label="Indicateurs clés">
+    <section class="kpis grid-4">
       <div class="card kpi">
         <div class="muted">Total activités</div>
         <div id="kpi_total" class="kpiVal">—</div>
-        <div class="kpiHint">Toutes activités chargées</div>
       </div>
 
       <div class="card kpi">
         <div class="muted">Activités en retard</div>
         <div id="kpi_overdue" class="kpiVal">—</div>
-        <div class="kpiHint">Date de fin dépassée</div>
       </div>
 
       <div class="card kpi">
         <div class="muted">Avec suivi renseigné</div>
         <div id="kpi_with_followup" class="kpiVal">—</div>
-        <div class="kpiHint">Commentaire de suivi saisi</div>
       </div>
 
       <div class="card kpi">
         <div class="muted">Avancement moyen</div>
         <div id="kpi_avg" class="kpiVal">—</div>
-        <div class="kpiHint">Sur les % disponibles</div>
       </div>
-    </section>
-    <!-- ✅ TOP ACTIVITÉS À RISQUE (sous le bandeau) -->
-    <section class="card riskCard">
-      <div class="cardHead">
-        <h2>Top activités en retard / à risque</h2>
-        <span class="pill">Priorité</span>
-      </div>
-
-      <div class="table-wrap">
-        <table id="riskTbl" aria-label="Top activités en retard ou à risque">
-          <thead>
-            <tr>
-              <th class="th-code">Code</th>
-              <th class="th-title">Activité</th>
-              <th>Début</th>
-              <th>Fin</th>
-              <th>Statut</th>
-              <th class="th-pct">%</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Rempli par app-dashboard.js -->
-          </tbody>
-        </table>
-      </div>
-
-      <div class="muted" id="riskMeta">—</div>
     </section>
 
     <!-- Charts – Ligne 1 -->
     <section class="grid-2">
-      <div class="card chartCard">
-        <div class="cardHead">
-          <h2>Activités par pilier</h2>
-          <span class="pill">Bar</span>
-        </div>
-        <div class="chartWrap">
-          <canvas id="byPilier" aria-label="Graphique activités par pilier"></canvas>
-        </div>
+      <div class="card chart">
+        <h2>Activités par pilier</h2>
+        <canvas id="byPilier"></canvas>
       </div>
 
-      <div class="card chartCard">
-        <div class="cardHead">
-          <h2>Activités par bureau</h2>
-          <span class="pill">Bar</span>
-        </div>
-        <div class="chartWrap">
-          <canvas id="byBureau" aria-label="Graphique activités par bureau"></canvas>
-        </div>
+      <div class="card chart">
+        <h2>Activités par bureau</h2>
+        <canvas id="byBureau"></canvas>
       </div>
     </section>
 
     <!-- Charts – Ligne 2 -->
     <section class="grid-2">
-      <div class="card chartCard">
-        <div class="cardHead">
-          <h2>Activités par type</h2>
-          <span class="pill">Bar</span>
-        </div>
-        <div class="chartWrap">
-          <canvas id="byType" aria-label="Graphique activités par type"></canvas>
-        </div>
+      <div class="card chart">
+        <h2>Activités par type</h2>
+        <canvas id="byType"></canvas>
       </div>
 
-      <div class="card chartCard">
-        <div class="cardHead">
-          <h2>Statuts (planificateur)</h2>
-          <span class="pill">Bar</span>
-        </div>
-        <div class="chartWrap">
-          <canvas id="byStatutPlanif" aria-label="Graphique statuts planificateur"></canvas>
-        </div>
+      <div class="card chart">
+        <h2>Statuts (planificateur)</h2>
+        <canvas id="byStatutPlanif"></canvas>
       </div>
     </section>
 
-    <!-- Trend -->
-    <section class="card chartCard">
-      <div class="cardHead">
-        <h2>Tendance mensuelle (date de début)</h2>
-        <span class="pill">Line</span>
-      </div>
-      <div class="chartWrap chartTall">
-        <canvas id="trendStart" aria-label="Graphique tendance mensuelle des activités"></canvas>
-      </div>
+    <!-- Trend (weekly) -->
+    <section class="card chart">
+      <h2>Tendance hebdomadaire (date de début)</h2>
+      <canvas id="trendStart"></canvas>
     </section>
 
     <noscript>
@@ -156,8 +110,7 @@
 
   </main>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-  <script src="assets/app-dashboard.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="assets/app-dashboard.js"></script>
 </body>
 </html>
