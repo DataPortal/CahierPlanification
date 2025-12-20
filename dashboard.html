@@ -25,29 +25,10 @@
   </header>
 
   <main class="container">
-        <!-- KPIs -->
-    <section class="kpis grid-4">
-      <div class="card kpi">
-        <div class="muted">Total activités</div>
-        <div id="kpi_total" class="kpiVal">—</div>
-      </div>
 
-      <div class="card kpi">
-        <div class="muted">Activités en retard</div>
-        <div id="kpi_overdue" class="kpiVal">—</div>
-      </div>
-
-      <div class="card kpi">
-        <div class="muted">Avec suivi renseigné</div>
-        <div id="kpi_with_followup" class="kpiVal">—</div>
-      </div>
-
-      <div class="card kpi">
-        <div class="muted">Avancement moyen</div>
-        <div id="kpi_avg" class="kpiVal">—</div>
-      </div>
-    </section>
-    <!-- ✅ TOP ACTIVITÉS À RISQUE (déplacé sous le bandeau) -->
+    <!-- =====================================================
+         1) TOP ACTIVITÉS À RISQUE (juste sous le bandeau)
+         ===================================================== -->
     <section class="card">
       <h2>Top activités en retard / à risque</h2>
       <div class="table-wrap">
@@ -66,38 +47,100 @@
           <tbody></tbody>
         </table>
       </div>
+      <div class="muted" id="riskMeta" style="margin-top:8px;">—</div>
     </section>
 
-    <!-- Charts – Ligne 1 -->
+    <!-- =====================================================
+         2) KPIs (en dessous du tableau des risques)
+         ===================================================== -->
+    <section class="kpis grid-4" aria-label="Indicateurs clés">
+      <div class="card kpi">
+        <div class="muted">Total activités</div>
+        <div id="kpi_total" class="kpiVal">—</div>
+        <div class="muted" style="margin-top:6px;">Toutes les activités</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="muted">Activités en retard</div>
+        <div id="kpi_overdue" class="kpiVal">—</div>
+        <div class="muted" style="margin-top:6px;">Date de fin dépassée / Retard</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="muted">Avec suivi renseigné</div>
+        <div id="kpi_with_followup" class="kpiVal">—</div>
+        <div class="muted" style="margin-top:6px;">Commentaire de suivi non vide</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="muted">Avancement moyen</div>
+        <div id="kpi_avg" class="kpiVal">—</div>
+        <div class="muted" style="margin-top:6px;">Moyenne des % disponibles</div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         3) Graphiques (cards homogènes)
+         - “meilleurs graphiques” = catégories en barres horizontales
+           et tendance en courbe (weekly).
+         (Le type exact reste piloté par app-dashboard.js)
+         ===================================================== -->
+
+    <!-- Ligne 1 -->
     <section class="grid-2">
-      <div class="card chart">
-        <h2>Activités par pilier</h2>
-        <canvas id="byPilier"></canvas>
+      <div class="card chartCard">
+        <div class="cardHead">
+          <h2>Activités par pilier</h2>
+          <span class="pill">Bar</span>
+        </div>
+        <div class="chartWrap">
+          <canvas id="byPilier"></canvas>
+        </div>
       </div>
 
-      <div class="card chart">
-        <h2>Activités par bureau</h2>
-        <canvas id="byBureau"></canvas>
+      <div class="card chartCard">
+        <div class="cardHead">
+          <h2>Activités par bureau</h2>
+          <span class="pill">Bar</span>
+        </div>
+        <div class="chartWrap">
+          <canvas id="byBureau"></canvas>
+        </div>
       </div>
     </section>
 
-    <!-- Charts – Ligne 2 -->
+    <!-- Ligne 2 -->
     <section class="grid-2">
-      <div class="card chart">
-        <h2>Activités par type</h2>
-        <canvas id="byType"></canvas>
+      <div class="card chartCard">
+        <div class="cardHead">
+          <h2>Activités par type</h2>
+          <span class="pill">Bar</span>
+        </div>
+        <div class="chartWrap">
+          <canvas id="byType"></canvas>
+        </div>
       </div>
 
-      <div class="card chart">
-        <h2>Statuts (planificateur)</h2>
-        <canvas id="byStatutPlanif"></canvas>
+      <div class="card chartCard">
+        <div class="cardHead">
+          <h2>Statuts (planificateur)</h2>
+          <span class="pill">Bar</span>
+        </div>
+        <div class="chartWrap">
+          <canvas id="byStatutPlanif"></canvas>
+        </div>
       </div>
     </section>
 
-    <!-- Trend (weekly) -->
-    <section class="card chart">
-      <h2>Tendance hebdomadaire (date de début)</h2>
-      <canvas id="trendStart"></canvas>
+    <!-- Trend weekly -->
+    <section class="card chartCard">
+      <div class="cardHead">
+        <h2>Tendance hebdomadaire (date de début)</h2>
+        <span class="pill">Line</span>
+      </div>
+      <div class="chartWrap chartTall">
+        <canvas id="trendStart"></canvas>
+      </div>
     </section>
 
     <noscript>
