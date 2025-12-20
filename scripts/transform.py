@@ -1,51 +1,33 @@
 import json
 from datetime import datetime, date
 from pathlib import Path
-from typing import Any, Dict, Optional, List
 
 INPUT = Path("data/submissions.json")
 OUTPUT = Path("data/activities.json")
 
-
 # ----------------------------
 # Helpers
 # ----------------------------
-def as_str(x: Any) -> str:
+def as_str(x) -> str:
     return "" if x is None else str(x)
 
-
-def pick(r: Dict[str, Any], *keys: str) -> Any:
-    """Return first non-empty value for provided keys."""
+def pick(r: dict, *keys):
+    """Retourne le premier champ non vide trouvé."""
     for k in keys:
-        if k in r:
-            v = r.get(k)
-            if v not in (None, "", " "):
-                return v
+        if k in r and r[k] not in (None, "", " "):
+            return r[k]
     return None
 
-
-def to_iso_date(v: Any) -> str:
-    """
-    Kobo can provide:
-      - '2025-12-19'
-      - '2025-12-19T14:31:31.568+01:00'
-      - '...Z'
-    We return 'YYYY-MM-DD' or ''.
-    """
+def to_iso_date(v) -> str:
     s = as_str(v).strip()
     if not s:
         return ""
-    # If already ISO date
-    if len(s) >= 10 and s[4] == "-" and s[7] == "-":
-        # handle datetime by slicing
-        return s[:10]
     try:
         return datetime.fromisoformat(s.replace("Z", "+00:00")).date().isoformat()
     except Exception:
         return s[:10]
 
-
-def to_iso_datetime(v: Any) -> str:
+def to_iso_datetime(v) -> str:
     s = as_str(v).strip()
     if not s:
         return ""
@@ -54,38 +36,40 @@ def to_iso_datetime(v: Any) -> str:
     except Exception:
         return s
 
-
-def normalize_status(s: Any) -> str:
-    """
-    Harmonise quelques statuts pour filtres/graphiques.
-    Vous pouvez ajuster selon vos valeurs réelles Kobo.
-    """
+def normalize_status(s: str) -> str:
     t = as_str(s).strip()
     if not t:
         return ""
     low = t.lower()
 
-    # Normalisations FR/variantes
+    # Harmonisation légère
+    if "annul" in low:
+        return "Annulée"
     if "plan" in low:
         return "Planifiée"
     if "final" in low or "clôt" in low or "clot" in low or "termin" in low or "achev" in low:
         return "Finalisée"
-    if "cours" in low or "en cours" in low:
+    if "cours" in low:
         return "En cours"
 
     return t
 
-
-def bool01(v: Any) -> int:
-    if v in (1, "1", True, "true", "True", "yes", "Yes", "oui", "Oui"):
-        return 1
-    return 0
-
+def normalize_priority(s: str) -> str:
+    t = as_str(s).strip()
+    if not t:
+        return ""
+    low = t.lower()
+    if "criti" in low:
+        return "Critique"
+    if "élev" in low or "eleve" in low:
+        return "Élevée"
+    if "moy" in low:
+        return "Moyenne"
+    if "faib" in low:
+        return "Faible"
+    return t
 
 def compute_overdue(date_fin_iso: str, statut_suivi: str, statut_planif: str) -> int:
-    """
-    En retard si date_fin < aujourd’hui ET pas finalisée/terminée.
-    """
     if not date_fin_iso:
         return 0
     try:
@@ -94,47 +78,36 @@ def compute_overdue(date_fin_iso: str, statut_suivi: str, statut_planif: str) ->
         return 0
 
     status = (statut_suivi or statut_planif or "").lower()
-    done = any(x in status for x in ["final", "clôt", "clot", "termin", "achev", "done", "completed", "close"])
+    done = any(x in status for x in ["final", "clôt", "clot", "termin", "achev", "done", "completed", "annul"])
     if done:
         return 0
 
     return 1 if d_end < date.today() else 0
 
-
-def extract_validation_label(r: Dict[str, Any]) -> str:
+def extract_validation_label(r: dict) -> str:
     """
-    Kobo met parfois la validation dans _validation_status (objet).
-    Ex: {"uid":"validation_status_approved","label":"Approved", ...}
+    Kobo peut mettre la validation dans _validation_status (objet).
     """
     vs = r.get("_validation_status")
     if isinstance(vs, dict):
-        label = vs.get("label") or vs.get("uid") or ""
+        label = vs.get("label") or vs.get("uid")
         return as_str(label).strip()
     return ""
 
-
-def normalize_units(unites_txt: str, programme_flag: int) -> List[str]:
+def parse_pct(v):
     """
-    Option A:
-      - on garde "Autres unités impliquées (texte)" comme élément principal
-      - si programme_flag == 1, on ajoute "Programme" (sans dupliquer)
+    Priorité: taux_avancement_calc, sinon Niveau d’avancement (%).
+    Kobo peut renvoyer: 50, "50", "50.0", "", None
     """
-    out: List[str] = []
-    txt = as_str(unites_txt).strip()
-    if txt:
-        out.append(txt)
-
-    if programme_flag == 1 and "Programme" not in out:
-        out.append("Programme")
-
-    # dédoublonnage propre
-    uniq = []
-    for u in out:
-        u = u.strip()
-        if u and u not in uniq:
-            uniq.append(u)
-    return uniq
-
+    if v in (None, "", " "):
+        return None
+    try:
+        x = float(v)
+        if x != x:  # NaN
+            return None
+        return max(0.0, min(100.0, x))
+    except Exception:
+        return None
 
 # ----------------------------
 # Main
@@ -146,124 +119,91 @@ with INPUT.open("r", encoding="utf-8") as f:
     raw = json.load(f)
 
 rows = raw["results"] if isinstance(raw, dict) and "results" in raw else raw
-if not isinstance(rows, list):
-    raise ValueError("submissions.json must be a list or a dict with a 'results' list")
-
-activities: List[Dict[str, Any]] = []
+activities = []
 
 for r in rows:
-    if not isinstance(r, dict):
-        continue
+    # ---------- Champs "nouvelle version" (flat) ----------
+    titre = pick(r, "Activité (titre court)", "activite_titre", "grp_planif/activite_titre")
+    objectif = pick(r, "Objectif(s) de l’activité", "objectifs_activite", "grp_planif/objectifs_activite")
+    livrable = pick(r, "Livrable attendu", "livrable_attendu", "grp_planif/livrable_attendu")
 
-    # =========================
-    # Champs retenus (depuis Kobo)
-    # =========================
-    # 1) Planification
-    code_activite = pick(r, "grp_planif/code_activite", "code_activite")
-    titre = pick(r, "grp_planif/activite_titre", "Activité (titre court)")
-    type_activite = pick(r, "grp_planif/type_activite", "Type d’activité")
-    pilier = pick(r, "grp_planif/pilier", "Pilier ONU Femmes")
-    bureau = pick(r, "grp_planif/bureau", "Bureau ONU Femmes (RDC)")
+    type_activite = pick(r, "Type d’activité", "type_activite", "grp_planif/type_activite")
+    pilier = pick(r, "Pilier ONU Femmes", "pilier", "grp_planif/pilier")
 
-    # Autres unités: texte
-    autres_unites = pick(r, "grp_planif/autres_unites", "Autres unités impliquées (si applicable)") or ""
+    code_activite = pick(r, "code_activite", "Code activité", "grp_planif/code_activite")
+    bureau = pick(r, "Bureau ONU Femmes (RDC)", "bureau", "grp_planif/bureau")
 
-    # Programme (checkbox 0/1) - dépend si votre Kobo le renvoie réellement
-    programme_flag = bool01(pick(r, "Autres unités impliquées (si applicable)/Programme",
-                                 "grp_planif/programme", "programme"))
+    risque = pick(r, "Risque/Priorité", "risque_priorite", "grp_planif/risque_priorite")
 
-    date_debut = to_iso_date(pick(r, "grp_planif/date_debut", "Date de début"))
-    date_fin = to_iso_date(pick(r, "grp_planif/date_fin", "Date de fin"))
+    date_debut = to_iso_date(pick(r, "Date de début", "date_debut", "grp_planif/date_debut"))
+    date_fin = to_iso_date(pick(r, "Date de fin", "date_fin", "grp_planif/date_fin"))
 
-    responsable = pick(r, "Responsable (nom)", "grp_planif/responsable", "responsable")
+    responsable = pick(r, "Responsable (nom)", "responsable", "grp_planif/responsable")
 
-    statut_planif_raw = pick(r, "grp_planif/statut_planif", "Statut (planificateur)")
-    statut_planificateur = normalize_status(statut_planif_raw)
+    statut_planif = normalize_status(pick(r, "Statut (planificateur)", "statut_planif", "grp_planif/statut_planif"))
+    statut_suivi = normalize_status(pick(r, "Statut de suivi", "statut_suivi", "grp_suivi/statut_suivi"))
 
-    # 2) Suivi
-    statut_suivi_raw = pick(r, "grp_suivi/statut_suivi", "Statut de suivi")
-    statut_suivi = normalize_status(statut_suivi_raw)
+    # Avancement: priorité au calcul
+    av_calc = pick(r, "taux_avancement_calc", "Taux avancement calc", "grp_suivi/taux_avancement_calc")
+    av_raw = pick(r, "Niveau d’avancement (%)", "niveau_avancement", "grp_suivi/niveau_avancement", "grp_suivi/avancement_pct", "grp_suivi/avancement")
+    avancement_pct = parse_pct(av_calc if av_calc not in (None, "", " ") else av_raw)
 
-    commentaire_suivi = pick(r, "grp_suivi/commentaire_suivi", "Commentaire de suivi")
+    commentaire_suivi = pick(r, "Commentaire de suivi", "commentaire_suivi", "grp_suivi/commentaire_suivi")
+    commentaire_validation = pick(r, "Commentaire de validation", "commentaire_validation", "grp_suivi/commentaire_validation")
 
-    # Avancement (%)
-    av_raw = pick(
-        r,
-        "grp_suivi/avancement_pct",
-        "grp_suivi/niveau_avancement",
-        "grp_suivi/avancement",
-        "Niveau d’avancement (%)",
-    )
-    try:
-        avancement_pct: Optional[float] = float(av_raw) if av_raw not in (None, "", " ") else None
-    except Exception:
-        avancement_pct = None
+    # Validation: champ direct ou validation PF
+    validation = pick(r, "Validation", "validation", "grp_suivi/validation_pf") or extract_validation_label(r)
 
-    # Validation
-    validation = pick(r, "grp_suivi/validation_pf", "Validation") or extract_validation_label(r)
-    commentaire_validation = pick(r, "grp_suivi/commentaire_validation", "Commentaire de validation")
+    date_mise_a_jour = to_iso_datetime(pick(r, "date_mise_a_jour", "grp_suivi/date_mise_a_jour"))
+    submission_time = to_iso_datetime(pick(r, "_submission_time"))
 
-    date_mise_a_jour = to_iso_datetime(pick(r, "grp_suivi/date_mise_a_jour", "date_mise_a_jour"))
+    overdue = compute_overdue(date_fin, statut_suivi, statut_planif)
 
-    # =========================
-    # Dérivés + normalisations
-    # =========================
-    overdue = compute_overdue(date_fin, statut_suivi, statut_planificateur)
-
-    unites_impliquees = normalize_units(autres_unites, programme_flag)
-
-    # =========================
-    # Construction JSON normalisé (Option A)
-    # =========================
     activities.append({
-        # Identifiants Kobo
+        # IDs Kobo
         "id": r.get("_id"),
         "uuid": r.get("_uuid"),
         "instance_id": r.get("meta/instanceID"),
 
-        # Timestamps Kobo
+        # timestamps Kobo
         "start": to_iso_datetime(r.get("start")),
         "end": to_iso_datetime(r.get("end")),
-        "submission_time": to_iso_datetime(r.get("_submission_time")),
+        "submission_time": submission_time,
 
-        # Champs retenus (normalisés)
-        "code_activite": as_str(code_activite).strip() or None,
-        "titre": as_str(titre).strip() or None,
-        "type_activite": as_str(type_activite).strip() or None,
-        "pilier": as_str(pilier).strip() or None,
-        "bureau": as_str(bureau).strip() or None,
-
-        "autres_unites": as_str(autres_unites).strip() or "",
-        "programme": programme_flag,  # 0/1
-        "unites_impliquees": unites_impliquees,  # liste (texte + flag)
+        # Champs normalisés
+        "code_activite": as_str(code_activite).strip(),
+        "titre": as_str(titre).strip(),
+        "objectif": as_str(objectif).strip(),
+        "livrable_attendu": as_str(livrable).strip(),
+        "type_activite": as_str(type_activite).strip(),
+        "pilier": as_str(pilier).strip(),
+        "bureau": as_str(bureau).strip(),
+        "risque_priorite": normalize_priority(risque),
 
         "date_debut": date_debut,
         "date_fin": date_fin,
-        "responsable": as_str(responsable).strip() or None,
+        "responsable": as_str(responsable).strip(),
 
-        "statut_planificateur": as_str(statut_planificateur).strip() or None,
-        "statut_suivi": as_str(statut_suivi).strip() or None,
-        "avancement_pct": avancement_pct,
-        "commentaire_suivi": as_str(commentaire_suivi).strip() or None,
+        "statut_planificateur": statut_planif,
+        "statut_suivi": statut_suivi,
 
-        "validation": as_str(validation).strip() or None,
-        "commentaire_validation": as_str(commentaire_validation).strip() or None,
+        "avancement_pct": avancement_pct,          # float 0..100 ou None
+        "taux_avancement_calc": parse_pct(av_calc), # conserve si vous l’affichez
+        "commentaire_suivi": as_str(commentaire_suivi).strip(),
+
+        "validation": as_str(validation).strip(),
+        "commentaire_validation": as_str(commentaire_validation).strip(),
         "date_mise_a_jour": date_mise_a_jour,
 
         # Indicateur dérivé
         "overdue": overdue,
     })
 
-# Tri stable : date_debut (vide -> fin) puis code
-def sort_key(x: Dict[str, Any]):
-    dd = x.get("date_debut") or "9999-12-31"
-    cc = x.get("code_activite") or ""
-    return (dd, cc)
-
-activities.sort(key=sort_key)
+# Tri stable : date début puis code
+activities.sort(key=lambda x: (x.get("date_debut") or "9999-12-31", x.get("code_activite") or ""))
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 with OUTPUT.open("w", encoding="utf-8") as f:
     json.dump(activities, f, ensure_ascii=False, indent=2)
 
-print(f"Transformed {len(activities)} rows -> {OUTPUT.as_posix()}")
+print(f"Transformed {len(activities)} rows -> {OUTPUT}")
