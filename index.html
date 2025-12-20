@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Agenda – Activités planifiées | ONU Femmes RDC</title>
+  <title>Agenda – Activités planifiées</title>
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -24,7 +24,7 @@
       <div class="grid">
         <div>
           <label>Recherche</label>
-          <input id="q" type="search" placeholder="code, bureau, pilier, titre, objectif, livrable, risque..." />
+          <input id="q" type="search" placeholder="code, titre, bureau, pilier, responsable, risque..." />
         </div>
         <div>
           <label>Bureau</label>
@@ -35,6 +35,17 @@
           <select id="pilier"></select>
         </div>
         <div>
+          <label>Type d’activité</label>
+          <select id="typeAct"></select>
+        </div>
+        <div>
+          <label>Risque / Priorité</label>
+          <select id="risque"></select>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:10px">
+        <div>
           <label>Statut (planificateur)</label>
           <select id="statutPlanif"></select>
         </div>
@@ -42,26 +53,15 @@
           <label>Statut de suivi</label>
           <select id="statutSuivi"></select>
         </div>
-      </div>
-
-      <div class="grid" style="margin-top:10px">
         <div>
-          <label>Début (du)</label>
+          <label>Date de début (du)</label>
           <input id="from" type="date" />
         </div>
         <div>
-          <label>Début (au)</label>
+          <label>Date de début (au)</label>
           <input id="to" type="date" />
         </div>
-        <div>
-          <label>Afficher</label>
-          <select id="scope">
-            <option value="all">Tout</option>
-            <option value="overdue">En retard</option>
-            <option value="withFollowup">Avec commentaire de suivi</option>
-          </select>
-        </div>
-        <div class="actions" style="grid-column: span 2;">
+        <div class="actions" style="grid-column: span 1;">
           <button id="reset" class="btn" type="button">Réinitialiser</button>
           <span id="meta" class="muted"></span>
         </div>
@@ -75,7 +75,7 @@
         <table id="tbl">
           <thead>
             <tr>
-              <!-- Ordre demandé -->
+              <!-- Ordre EXACT demandé -->
               <th class="th-code">code_activite</th>
               <th class="th-bureau">Bureau ONU Femmes (RDC)</th>
               <th class="th-pilier">Pilier ONU Femmes</th>
@@ -90,12 +90,10 @@
               <th class="th-status">Statut (planificateur)</th>
               <th class="th-status">Statut de suivi</th>
               <th class="th-pct">Niveau d’avancement (%)</th>
-              <th class="th-pctcalc">taux_avancement_calc</th>
               <th class="th-notes">Commentaire de suivi</th>
-              <th class="th-valid">Validation</th>
-              <th class="th-validcom">Commentaire de validation</th>
             </tr>
           </thead>
+
           <tbody></tbody>
         </table>
       </div>
@@ -103,6 +101,8 @@
   </main>
 
   <script src="assets/utils.js"></script>
+  <!-- IMPORTANT: votre script resize (si séparé) doit être chargé AVANT app-table.js
+       ex: <script src="assets/column-resize.js"></script> -->
   <script src="assets/app-table.js"></script>
 </body>
 </html>
