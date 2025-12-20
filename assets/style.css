@@ -490,5 +490,16 @@ th:hover .col-resizer::before{
 #tbl td{
   line-height: 1.35;
 }
+/* Affichage complet du contenu (pas d'ellipsis) */
+#tbl td, #tbl th{
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.table-wrap{ overflow:auto; }
+table{ min-width: 1800px; } /* ajustez selon le nombre de colonnes */
+
 
 
