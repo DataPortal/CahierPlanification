@@ -11,10 +11,13 @@ OUTPUT = Path("data/activities.json")
 def as_str(x) -> str:
     return "" if x is None else str(x)
 
+def is_non_empty(v) -> bool:
+    return v not in (None, "", " ") and as_str(v).strip() != ""
+
 def pick(r: dict, *keys):
-    """Retourne le premier champ non vide trouvé."""
+    """Retourne le premier champ non vide trouvé parmi keys."""
     for k in keys:
-        if k in r and r[k] not in (None, "", " "):
+        if k in r and is_non_empty(r[k]):
             return r[k]
     return None
 
@@ -22,6 +25,7 @@ def to_iso_date(v) -> str:
     s = as_str(v).strip()
     if not s:
         return ""
+    # Kobo renvoie souvent "2025-12-19" ou "2025-12-19T..."
     try:
         return datetime.fromisoformat(s.replace("Z", "+00:00")).date().isoformat()
     except Exception:
@@ -42,15 +46,17 @@ def normalize_status(s: str) -> str:
         return ""
     low = t.lower()
 
-    # Harmonisation légère
+    # Harmonisation légère (vos valeurs: Planifiee / En_cours / Finalisee / Annulee)
     if "annul" in low:
         return "Annulée"
     if "plan" in low:
         return "Planifiée"
     if "final" in low or "clôt" in low or "clot" in low or "termin" in low or "achev" in low:
         return "Finalisée"
-    if "cours" in low:
+    if "cours" in low or "en_cours" in low or "encours" in low:
         return "En cours"
+    if "retard" in low:
+        return "Retard"
 
     return t
 
@@ -59,9 +65,11 @@ def normalize_priority(s: str) -> str:
     if not t:
         return ""
     low = t.lower()
+
+    # Vos valeurs: Faible, Moyenne, Elevee, Critique
     if "criti" in low:
         return "Critique"
-    if "élev" in low or "eleve" in low:
+    if "élev" in low or "eleve" in low or "haut" in low:
         return "Élevée"
     if "moy" in low:
         return "Moyenne"
@@ -69,7 +77,37 @@ def normalize_priority(s: str) -> str:
         return "Faible"
     return t
 
+def extract_validation_label(r: dict) -> str:
+    """
+    Kobo peut mettre la validation dans _validation_status (objet).
+    """
+    vs = r.get("_validation_status")
+    if isinstance(vs, dict):
+        label = vs.get("label") or vs.get("uid")
+        return as_str(label).strip()
+    return ""
+
+def parse_pct(v):
+    """
+    Kobo peut renvoyer: 50, "50", "50.0", "", None
+    """
+    if v in (None, "", " "):
+        return None
+    s = as_str(v).strip()
+    if not s:
+        return None
+    try:
+        x = float(s.replace(",", "."))
+        if x != x:  # NaN
+            return None
+        return max(0.0, min(100.0, x))
+    except Exception:
+        return None
+
 def compute_overdue(date_fin_iso: str, statut_suivi: str, statut_planif: str) -> int:
+    """
+    En retard si date_fin < aujourd’hui ET pas finalisée/annulée.
+    """
     if not date_fin_iso:
         return 0
     try:
@@ -84,31 +122,6 @@ def compute_overdue(date_fin_iso: str, statut_suivi: str, statut_planif: str) ->
 
     return 1 if d_end < date.today() else 0
 
-def extract_validation_label(r: dict) -> str:
-    """
-    Kobo peut mettre la validation dans _validation_status (objet).
-    """
-    vs = r.get("_validation_status")
-    if isinstance(vs, dict):
-        label = vs.get("label") or vs.get("uid")
-        return as_str(label).strip()
-    return ""
-
-def parse_pct(v):
-    """
-    Priorité: taux_avancement_calc, sinon Niveau d’avancement (%).
-    Kobo peut renvoyer: 50, "50", "50.0", "", None
-    """
-    if v in (None, "", " "):
-        return None
-    try:
-        x = float(v)
-        if x != x:  # NaN
-            return None
-        return max(0.0, min(100.0, x))
-    except Exception:
-        return None
-
 # ----------------------------
 # Main
 # ----------------------------
@@ -122,39 +135,129 @@ rows = raw["results"] if isinstance(raw, dict) and "results" in raw else raw
 activities = []
 
 for r in rows:
-    # ---------- Champs "nouvelle version" (flat) ----------
-    titre = pick(r, "Activité (titre court)", "activite_titre", "grp_planif/activite_titre")
-    objectif = pick(r, "Objectif(s) de l’activité", "objectifs_activite", "grp_planif/objectifs_activite")
-    livrable = pick(r, "Livrable attendu", "livrable_attendu", "grp_planif/livrable_attendu")
+    # =====================================================
+    # Planification (Kobo keys réelles)
+    # =====================================================
+    titre = pick(r,
+        "grp_planif/activite_titre",
+        "Activité (titre court)",
+        "activite_titre"
+    )
 
-    type_activite = pick(r, "Type d’activité", "type_activite", "grp_planif/type_activite")
-    pilier = pick(r, "Pilier ONU Femmes", "pilier", "grp_planif/pilier")
+    objectif = pick(r,
+        "grp_planif/objectif",
+        "Objectif(s) de l’activité",
+        "objectif"
+    )
 
-    code_activite = pick(r, "code_activite", "Code activité", "grp_planif/code_activite")
-    bureau = pick(r, "Bureau ONU Femmes (RDC)", "bureau", "grp_planif/bureau")
+    livrable = pick(r,
+        "grp_planif/livrable",
+        "Livrable attendu",
+        "livrable_attendu"
+    )
 
-    risque = pick(r, "Risque/Priorité", "risque_priorite", "grp_planif/risque_priorite")
+    type_activite = pick(r,
+        "grp_planif/type_activite",
+        "Type d’activité",
+        "type_activite"
+    )
 
-    date_debut = to_iso_date(pick(r, "Date de début", "date_debut", "grp_planif/date_debut"))
-    date_fin = to_iso_date(pick(r, "Date de fin", "date_fin", "grp_planif/date_fin"))
+    pilier = pick(r,
+        "grp_planif/pilier",
+        "Pilier ONU Femmes",
+        "pilier"
+    )
 
-    responsable = pick(r, "Responsable (nom)", "responsable", "grp_planif/responsable")
+    code_activite = pick(r,
+        "grp_planif/code_activite",
+        "code_activite",
+        "Code activité"
+    )
 
-    statut_planif = normalize_status(pick(r, "Statut (planificateur)", "statut_planif", "grp_planif/statut_planif"))
-    statut_suivi = normalize_status(pick(r, "Statut de suivi", "statut_suivi", "grp_suivi/statut_suivi"))
+    bureau = pick(r,
+        "grp_planif/bureau",
+        "Bureau ONU Femmes (RDC)",
+        "bureau"
+    )
 
-    # Avancement: priorité au calcul
-    av_calc = pick(r, "taux_avancement_calc", "Taux avancement calc", "grp_suivi/taux_avancement_calc")
-    av_raw = pick(r, "Niveau d’avancement (%)", "niveau_avancement", "grp_suivi/niveau_avancement", "grp_suivi/avancement_pct", "grp_suivi/avancement")
-    avancement_pct = parse_pct(av_calc if av_calc not in (None, "", " ") else av_raw)
+    risque = pick(r,
+        "grp_planif/priorite",        # ✅ clé réelle dans vos soumissions
+        "Risque/Priorité",
+        "risque_priorite"
+    )
 
-    commentaire_suivi = pick(r, "Commentaire de suivi", "commentaire_suivi", "grp_suivi/commentaire_suivi")
-    commentaire_validation = pick(r, "Commentaire de validation", "commentaire_validation", "grp_suivi/commentaire_validation")
+    date_debut = to_iso_date(pick(r,
+        "grp_planif/date_debut",
+        "Date de début",
+        "date_debut"
+    ))
 
-    # Validation: champ direct ou validation PF
-    validation = pick(r, "Validation", "validation", "grp_suivi/validation_pf") or extract_validation_label(r)
+    date_fin = to_iso_date(pick(r,
+        "grp_planif/date_fin",
+        "Date de fin",
+        "date_fin"
+    ))
 
-    date_mise_a_jour = to_iso_datetime(pick(r, "date_mise_a_jour", "grp_suivi/date_mise_a_jour"))
+    responsable = pick(r,
+        "grp_planif/responsable",
+        "Responsable (nom)",
+        "responsable"
+    )
+
+    statut_planif_raw = pick(r,
+        "grp_planif/statut_planif",
+        "Statut (planificateur)",
+        "statut_planif"
+    )
+    statut_planif = normalize_status(statut_planif_raw)
+
+    # =====================================================
+    # Suivi (Kobo keys réelles)
+    # =====================================================
+    statut_suivi_raw = pick(r,
+        "grp_suivi/statut_suivi",
+        "Statut de suivi",
+        "statut_suivi"
+    )
+    statut_suivi = normalize_status(statut_suivi_raw)
+
+    # Avancement: priorité au calc, sinon taux_avancement
+    av_calc_raw = pick(r,
+        "grp_suivi/taux_avancement_calc",
+        "taux_avancement_calc"
+    )
+    av_raw = pick(r,
+        "grp_suivi/taux_avancement",  # ✅ clé réelle
+        "Niveau d’avancement (%)",
+        "avancement_pct"
+    )
+
+    taux_avancement_calc = parse_pct(av_calc_raw)
+    avancement_pct = parse_pct(av_calc_raw if is_non_empty(av_calc_raw) else av_raw)
+
+    commentaire_suivi = pick(r,
+        "grp_suivi/commentaire_suivi",
+        "Commentaire de suivi",
+        "commentaire_suivi"
+    )
+
+    validation = pick(r,
+        "grp_suivi/validation_pf",
+        "Validation",
+        "validation"
+    ) or extract_validation_label(r)
+
+    commentaire_validation = pick(r,
+        "grp_suivi/commentaire_validation",
+        "Commentaire de validation",
+        "commentaire_validation"
+    )
+
+    date_mise_a_jour = to_iso_datetime(pick(r,
+        "grp_suivi/date_mise_a_jour",
+        "date_mise_a_jour"
+    ))
+
     submission_time = to_iso_datetime(pick(r, "_submission_time"))
 
     overdue = compute_overdue(date_fin, statut_suivi, statut_planif)
@@ -163,21 +266,21 @@ for r in rows:
         # IDs Kobo
         "id": r.get("_id"),
         "uuid": r.get("_uuid"),
-        "instance_id": r.get("meta/instanceID"),
+        "instance_id": r.get("meta/instanceID") or r.get("meta/rootUuid") or "",
 
         # timestamps Kobo
         "start": to_iso_datetime(r.get("start")),
         "end": to_iso_datetime(r.get("end")),
         "submission_time": submission_time,
 
-        # Champs normalisés
+        # Champs normalisés (vos colonnes retenues)
         "code_activite": as_str(code_activite).strip(),
+        "bureau": as_str(bureau).strip(),
+        "pilier": as_str(pilier).strip(),
         "titre": as_str(titre).strip(),
+        "type_activite": as_str(type_activite).strip(),
         "objectif": as_str(objectif).strip(),
         "livrable_attendu": as_str(livrable).strip(),
-        "type_activite": as_str(type_activite).strip(),
-        "pilier": as_str(pilier).strip(),
-        "bureau": as_str(bureau).strip(),
         "risque_priorite": normalize_priority(risque),
 
         "date_debut": date_debut,
@@ -187,10 +290,10 @@ for r in rows:
         "statut_planificateur": statut_planif,
         "statut_suivi": statut_suivi,
 
-        "avancement_pct": avancement_pct,          # float 0..100 ou None
-        "taux_avancement_calc": parse_pct(av_calc), # conserve si vous l’affichez
-        "commentaire_suivi": as_str(commentaire_suivi).strip(),
+        "avancement_pct": avancement_pct,              # float 0..100 ou None
+        "taux_avancement_calc": taux_avancement_calc,  # float 0..100 ou None
 
+        "commentaire_suivi": as_str(commentaire_suivi).strip(),
         "validation": as_str(validation).strip(),
         "commentaire_validation": as_str(commentaire_validation).strip(),
         "date_mise_a_jour": date_mise_a_jour,
