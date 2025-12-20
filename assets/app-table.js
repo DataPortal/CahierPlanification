@@ -129,7 +129,7 @@
         r.pilier,
         r.titre,
         r.type_activite,
-        r.objectif,
+        r.objectifs,
         r.livrable,
         r.risque_priorite,
         r.responsable,
@@ -201,7 +201,7 @@
           <td class="col-title">${esc(r.titre || "")}</td>
 
           <td class="col-type">${esc(r.type_activite || "")}</td>
-          <td class="col-obj">${esc(r.objectif || "")}</td>
+          <td class="col-obj">${esc(r.objectifs || "")}</td>
           <td class="col-livrable">${esc(r.livrable || "")}</td>
           <td class="col-risque">${esc(r.risque_priorite || "")}</td>
 
