@@ -1,183 +1,227 @@
+// assets/app-dashboard.js
 (async function () {
-  // =============================
-  // 1) Charger les données
-  // =============================
-  let raw;
+  "use strict";
+
+  // -------------------------
+  // Load data
+  // -------------------------
+  let data;
   try {
-    raw = await fetch("./data/activities.json", { cache: "no-store" }).then(r => {
+    data = await fetch("./data/activities.json", { cache: "no-store" }).then((r) => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     });
-    if (!Array.isArray(raw)) throw new Error("activities.json is not an array");
+    if (!Array.isArray(data)) throw new Error("activities.json is not an array");
   } catch (e) {
     console.error("Failed to load activities.json", e);
     return;
   }
 
-  const data = raw;
+  const esc = window.escHTML || ((v) => (v == null ? "" : String(v)));
 
-  // =============================
-  // 2) Utils
-  // =============================
-  const toYM = (d) => (d && String(d).length >= 7) ? String(d).slice(0, 7) : "Sans date";
+  const $ = (id) => document.getElementById(id);
 
-  const numOrNull = (v) => {
-    if (v === null || v === undefined || v === "") return null;
+  // KPIs
+  const elTotal = $("kpi_total");
+  const elOverdue = $("kpi_overdue");
+  const elWithFollowup = $("kpi_with_followup");
+  const elAvg = $("kpi_avg");
+
+  // Charts
+  const ctxPilier = $("byPilier");
+  const ctxBureau = $("byBureau");
+  const ctxType = $("byType");
+  const ctxStatutPlanif = $("byStatutPlanif");
+  const ctxTrend = $("trendStart");
+
+  // Risk table
+  const riskBody = document.querySelector("#riskTbl tbody");
+
+  // -------------------------
+  // Utils
+  // -------------------------
+  function isOverdue(r) {
+    return r && r.overdue === 1;
+  }
+
+  function hasFollowup(r) {
+    return !!(r && String(r.commentaire_suivi || "").trim());
+  }
+
+  function num(v) {
     const n = Number(v);
-    return Number.isNaN(n) ? null : n;
-  };
+    return Number.isFinite(n) ? n : null;
+  }
 
-  const avg = (arr) => {
-    const vals = arr.map(numOrNull).filter(v => v !== null);
-    if (!vals.length) return null;
-    return vals.reduce((a, b) => a + b, 0) / vals.length;
-  };
+  function groupCount(rows, keyFn) {
+    const m = new Map();
+    rows.forEach((r) => {
+      const k = keyFn(r) || "Non renseigné";
+      m.set(k, (m.get(k) || 0) + 1);
+    });
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
+  }
 
-  const groupCount = (arr, keyFn) => {
-    return arr.reduce((acc, it) => {
-      const k = keyFn(it);
-      acc[k] = (acc[k] || 0) + 1;
-      return acc;
-    }, {});
-  };
+  // ---- Trend weekly (ISO week) ----
+  function isoWeekKey(isoDate) {
+    if (!isoDate) return null;
 
-  const isOverdue = (r) => r && r.overdue === 1;
+    // Parse "YYYY-MM-DD" safely in local time
+    const parts = String(isoDate).slice(0, 10).split("-");
+    if (parts.length !== 3) return null;
 
-  // Risque score (pour “Top à risque”)
-  const riskScore = (r) => {
-    const risk = (r?.risque_priorite || "").toString().toLowerCase();
-    let score = 0;
+    const y = Number(parts[0]);
+    const m = Number(parts[1]);
+    const d = Number(parts[2]);
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
 
-    if (isOverdue(r)) score += 100;
+    // UTC date for ISO week math
+    const date = new Date(Date.UTC(y, m - 1, d));
+    if (Number.isNaN(date.getTime())) return null;
 
-    if (risk.includes("crit")) score += 80;
-    else if (risk.includes("élev") || risk.includes("ele") || risk.includes("haut")) score += 60;
-    else if (risk.includes("moy")) score += 40;
-    else if (risk.includes("faib")) score += 20;
+    // ISO week algorithm
+    // Thursday in current week decides the year
+    const day = date.getUTCDay() || 7; // Mon=1..Sun=7
+    date.setUTCDate(date.getUTCDate() + 4 - day);
 
-    // Si fin imminente (<= 7 jours) et pas finalisée : +20
-    try {
-      const fin = r?.date_fin ? new Date(r.date_fin) : null;
-      const today = new Date(); today.setHours(0,0,0,0);
-      if (fin && !Number.isNaN(fin.getTime())) {
-        const diffDays = Math.round((fin.getTime() - today.getTime()) / (1000*60*60*24));
-        const st = ((r?.statut_planificateur || "") + " " + (r?.statut_suivi || "")).toLowerCase();
-        const done = ["final", "clôt", "clot", "termin", "achev", "done", "completed", "annul"].some(x => st.includes(x));
-        if (!done && diffDays >= 0 && diffDays <= 7) score += 20;
-      }
-    } catch (_) {}
+    const isoYear = date.getUTCFullYear();
 
-    return score;
-  };
+    // Week 1 is the week with Jan 4th
+    const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+    const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
 
-  // =============================
-  // 3) KPIs
-  // =============================
+    const ww = String(weekNo).padStart(2, "0");
+    return `${isoYear}-W${ww}`;
+  }
+
+  // priorité risque pour tri
+  function priorityRank(p) {
+    const t = String(p || "").toLowerCase();
+    if (t.includes("criti")) return 4;
+    if (t.includes("élev") || t.includes("eleve")) return 3;
+    if (t.includes("moy")) return 2;
+    if (t.includes("faib")) return 1;
+    return 0;
+  }
+
+  // -------------------------
+  // KPIs (inchangé)
+  // -------------------------
   const total = data.length;
   const overdue = data.filter(isOverdue).length;
-  const withFollowup = data.filter(d => (d.commentaire_suivi || "").toString().trim().length > 0).length;
+  const withFollowup = data.filter(hasFollowup).length;
 
-  const avgPct = avg(data.map(d => d.avancement_pct));
-  // (optionnel) moyenne du taux calculé, si vous voulez l’utiliser plus tard
-  // const avgCalc = avg(data.map(d => d.taux_avancement_calc));
+  const pctValues = data
+    .map((r) => num(r.avancement_pct))
+    .filter((x) => x !== null);
 
-  const elTotal = document.getElementById("kpi_total");
-  const elOverdue = document.getElementById("kpi_overdue");
-  const elWith = document.getElementById("kpi_with_followup");
-  const elAvg = document.getElementById("kpi_avg");
+  const avg = pctValues.length ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length) : null;
 
-  if (elTotal) elTotal.textContent = total;
-  if (elOverdue) elOverdue.textContent = overdue;
-  if (elWith) elWith.textContent = withFollowup;
-  if (elAvg) elAvg.textContent = (avgPct === null) ? "—" : `${Math.round(avgPct)}%`;
+  if (elTotal) elTotal.textContent = String(total);
+  if (elOverdue) elOverdue.textContent = String(overdue);
+  if (elWithFollowup) elWithFollowup.textContent = String(withFollowup);
+  if (elAvg) elAvg.textContent = avg === null ? "—" : `${avg}%`;
 
-  // =============================
-  // 4) Charts
-  // =============================
-  const byPilier = groupCount(data, d => d.pilier || "Non renseigné");
-  const byBureau = groupCount(data, d => d.bureau || "Non renseigné");
-  const byType = groupCount(data, d => d.type_activite || "Non renseigné");
-  const byStatutPlanif = groupCount(data, d => d.statut_planificateur || "Non renseigné");
-  const trendStart = groupCount(data, d => toYM(d.date_debut));
+  // -------------------------
+  // Charts (Chart.js)
+  // -------------------------
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js not loaded");
+    return;
+  }
 
-  function makeBar(canvasId, obj, label) {
-    const el = document.getElementById(canvasId);
-    if (!el) return;
-    const labels = Object.keys(obj);
-    new Chart(el, {
+  Chart.defaults.font.family = "system-ui,-apple-system,Segoe UI,Roboto,Arial";
+  Chart.defaults.plugins.legend.display = false;
+
+  function makeBarChart(canvas, pairs, label) {
+    if (!canvas) return null;
+    const labels = pairs.map((x) => x[0]);
+    const values = pairs.map((x) => x[1]);
+    return new Chart(canvas, {
       type: "bar",
-      data: {
-        labels,
-        datasets: [{ label: label || "Nombre", data: labels.map(k => obj[k]) }]
-      },
+      data: { labels, datasets: [{ label, data: values }] },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { x: { ticks: { autoSkip: false } } }
+        scales: {
+          x: { ticks: { maxRotation: 30, minRotation: 0 } },
+          y: { beginAtZero: true, precision: 0 }
+        }
       }
     });
   }
 
-  function makeLine(canvasId, obj, label) {
-    const el = document.getElementById(canvasId);
-    if (!el) return;
-    const labels = Object.keys(obj).sort();
-    new Chart(el, {
+  function makeLineChart(canvas, labels, values, label) {
+    if (!canvas) return null;
+    return new Chart(canvas, {
       type: "line",
-      data: {
-        labels,
-        datasets: [{ label: label || "Activités", data: labels.map(k => obj[k]) }]
-      },
+      data: { labels, datasets: [{ label, data: values, tension: 0.2 }] },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
+        scales: { y: { beginAtZero: true, precision: 0 } }
       }
     });
   }
 
-  makeBar("byPilier", byPilier, "Activités");
-  makeBar("byBureau", byBureau, "Activités");
-  makeBar("byType", byType, "Activités");
-  makeBar("byStatutPlanif", byStatutPlanif, "Activités");
-  makeLine("trendStart", trendStart, "Activités");
+  // by pilier / bureau / type / statut planif (inchangé)
+  makeBarChart(ctxPilier, groupCount(data, (r) => r.pilier), "Activités");
+  makeBarChart(ctxBureau, groupCount(data, (r) => r.bureau), "Activités");
+  makeBarChart(ctxType, groupCount(data, (r) => r.type_activite), "Activités");
+  makeBarChart(ctxStatutPlanif, groupCount(data, (r) => r.statut_planificateur), "Activités");
 
-  // =============================
-  // 5) Top activités à risque (riskTbl)
-  // =============================
-  const riskTbody = document.querySelector("#riskTbl tbody");
-  if (riskTbody) {
+  // -------------------------
+  // Trend weekly (date_debut)  ✅ MODIF ICI
+  // -------------------------
+  const byWeek = new Map();
+  data.forEach((r) => {
+    const wk = isoWeekKey(r.date_debut);
+    if (!wk) return;
+    byWeek.set(wk, (byWeek.get(wk) || 0) + 1);
+  });
+
+  const trendLabels = Array.from(byWeek.keys()).sort((a, b) => a.localeCompare(b));
+  const trendValues = trendLabels.map((k) => byWeek.get(k));
+  makeLineChart(ctxTrend, trendLabels, trendValues, "Activités");
+
+  // -------------------------
+  // Top activités à risque (inchangé)
+  // -------------------------
+  if (riskBody) {
     const top = data
       .slice()
-      .sort((a, b) => riskScore(b) - riskScore(a))
+      .sort((a, b) => {
+        // 1) overdue d'abord
+        const oa = isOverdue(a) ? 1 : 0;
+        const ob = isOverdue(b) ? 1 : 0;
+        if (oa !== ob) return ob - oa;
+
+        // 2) priorité risque
+        const ra = priorityRank(a.risque_priorite);
+        const rb = priorityRank(b.risque_priorite);
+        if (ra !== rb) return rb - ra;
+
+        // 3) date_fin la plus proche
+        return (a.date_fin || "9999-12-31").localeCompare(b.date_fin || "9999-12-31");
+      })
       .slice(0, 12);
 
-    const esc = (v) =>
-      (v == null ? "" : String(v))
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    riskBody.innerHTML = top
+      .map((r) => {
+        const pct = num(r.avancement_pct);
+        const pctTxt = pct === null ? "—" : `${Math.round(pct)}%`;
 
-    riskTbody.innerHTML = top.map(r => {
-      const pct = numOrNull(r.avancement_pct);
-      const pctStr = (pct === null) ? "—" : `${Math.round(Math.max(0, Math.min(100, pct)))}%`;
-
-      return `
-        <tr>
-          <td class="col-code">${esc(r.code_activite || "")}</td>
-          <td class="col-title">${esc(r.titre || "")}</td>
-          <td>${esc(r.bureau || "")}</td>
-          <td>${esc(r.pilier || "")}</td>
-          <td>${esc(r.risque_priorite || (isOverdue(r) ? "En retard" : ""))}</td>
-          <td>${esc(r.date_debut || "")}</td>
-          <td>${esc(r.date_fin || "")}</td>
-          <td>${esc(r.statut_planificateur || "")}</td>
-          <td>${esc(pctStr)}</td>
-        </tr>
-      `;
-    }).join("");
+        return `
+          <tr>
+            <td class="col-code">${esc(r.code_activite || "")}</td>
+            <td class="col-title">${esc(r.titre || "")}</td>
+            <td>${esc(r.date_debut || "")}</td>
+            <td>${esc(r.date_fin || "")}</td>
+            <td>${esc(r.risque_priorite || (isOverdue(r) ? "En retard" : ""))}</td>
+            <td>${esc(pctTxt)}</td>
+          </tr>
+        `;
+      })
+      .join("");
   }
 })();
