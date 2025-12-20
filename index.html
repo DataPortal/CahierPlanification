@@ -18,6 +18,7 @@
   </header>
 
   <main class="container">
+    <!-- Filtres -->
     <section class="filters card">
       <h2>Filtres & recherche</h2>
 
@@ -68,30 +69,47 @@
       </div>
     </section>
 
+    <!-- Tableau -->
     <section class="card">
       <h2>Activités planifiées & suivi</h2>
+
       <div class="table-wrap">
-        <table id="tbl">
+        <table id="tbl" class="tbl-wide">
           <thead>
             <tr>
-              <th class="th-code">Code</th>
-              <th class="th-title">Activité</th>
-              <th class="th-date">Début</th>
-              <th class="th-date">Fin</th>
-              <th class="th-status">Statut planif</th>
-              <th class="th-status">Statut suivi</th>
-              <th class="th-pct">%</th>
-              <th class="th-notes">Commentaire</th>
+              <!-- Vos colonnes retenues (toutes) -->
+              <th class="th-title">Activité (titre court)</th>
+              <th class="th-obj">Objectif(s) de l’activité</th>
+              <th class="th-livrable">Livrable attendu</th>
+              <th class="th-type">Type d’activité</th>
+              <th class="th-pilier">Pilier ONU Femmes</th>
+              <th class="th-code">code_activite</th>
+              <th class="th-bureau">Bureau ONU Femmes (RDC)</th>
+              <th class="th-risque">Risque/Priorité</th>
+              <th class="th-date">Date de début</th>
+              <th class="th-date">Date de fin</th>
+              <th class="th-resp">Responsable (nom)</th>
+              <th class="th-status">Statut (planificateur)</th>
+              <th class="th-status">Statut de suivi</th>
+              <th class="th-pct">Niveau d’avancement (%)</th>
+              <th class="th-pctcalc">taux_avancement_calc</th>
+              <th class="th-notes">Commentaire de suivi</th>
               <th class="th-valid">Validation</th>
-              <th class="th-maj">Maj</th>
+              <th class="th-validcom">Commentaire de validation</th>
             </tr>
           </thead>
+
           <tbody></tbody>
         </table>
+      </div>
+
+      <div class="muted" style="margin-top:8px">
+        Astuce : utilisez la barre de défilement horizontale pour voir toutes les colonnes.
       </div>
     </section>
   </main>
 
+  <!-- Scripts -->
   <script src="assets/utils.js"></script>
   <script src="assets/col-resize.js"></script>
   <script src="assets/app-table.js"></script>
