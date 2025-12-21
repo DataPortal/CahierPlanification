@@ -1,10 +1,19 @@
+/* =========================================================
+   app-table.js (REVISÉ)
+   - Tri par ordre d’enregistrement (dernier en 1er)
+   - Filtres inchangés
+   - Colonnes dans l’ordre demandé
+   - Pas de détails secondaires sous le titre
+   - Drag & resize des colonnes si enableColumnResize est présent
+   ========================================================= */
+
 (async function () {
   // =====================================================
   // 1) Charger les activités normalisées
   // =====================================================
   let data;
   try {
-    data = await fetch("./data/activities.json", { cache: "no-store" }).then(r => {
+    data = await fetch("./data/activities.json", { cache: "no-store" }).then((r) => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     });
@@ -52,14 +61,20 @@
   const norm = (v) => (v || "").toString().trim().toLowerCase();
 
   const uniq = (arr) =>
-    Array.from(new Set(arr.filter(v => v !== null && v !== undefined).map(v => String(v).trim()).filter(Boolean)))
-      .sort((a, b) => a.localeCompare(b));
+    Array.from(
+      new Set(
+        arr
+          .filter((v) => v !== null && v !== undefined)
+          .map((v) => String(v).trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b));
 
   function fillSelect(select, values, placeholder) {
     if (!select) return;
     select.innerHTML =
       `<option value="">${esc(placeholder)}</option>` +
-      values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+      values.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
   }
 
   function isOverdue(r) {
@@ -71,6 +86,25 @@
     const n = Number(v);
     if (Number.isNaN(n)) return null;
     return Math.max(0, Math.min(100, n));
+  }
+
+  // Ordre d’enregistrement: dernier en 1er
+  function parseTime(v) {
+    if (!v) return NaN;
+    const t = Date.parse(v);
+    return Number.isNaN(t) ? NaN : t;
+  }
+
+  function recordTime(r) {
+    // priorité: submission_time (date d’enregistrement Kobo)
+    // puis date_mise_a_jour (suivi), puis end/start
+    return (
+      parseTime(r.submission_time) ||
+      parseTime(r.date_mise_a_jour) ||
+      parseTime(r.end) ||
+      parseTime(r.start) ||
+      0
+    );
   }
 
   // Progress bar HTML
@@ -100,13 +134,21 @@
   // =====================================================
   // 4) Filtres (depuis activities.json)
   // =====================================================
-  fillSelect(elBureau, uniq(data.map(d => d.bureau)), "Tous les bureaux");
-  fillSelect(elPilier, uniq(data.map(d => d.pilier)), "Tous les piliers");
-  fillSelect(elTypeAct, uniq(data.map(d => d.type_activite)), "Tous les types");
-  fillSelect(elRisque, uniq(data.map(d => d.risque_priorite)), "Tous les risques");
+  fillSelect(elBureau, uniq(data.map((d) => d.bureau)), "Tous les bureaux");
+  fillSelect(elPilier, uniq(data.map((d) => d.pilier)), "Tous les piliers");
+  fillSelect(elTypeAct, uniq(data.map((d) => d.type_activite)), "Tous les types");
+  fillSelect(elRisque, uniq(data.map((d) => d.risque_priorite)), "Tous les risques");
 
-  fillSelect(elStatutPlanif, uniq(data.map(d => d.statut_planificateur)), "Tous statuts (planif)");
-  fillSelect(elStatutSuivi, uniq(data.map(d => d.statut_suivi)), "Tous statuts (suivi)");
+  fillSelect(
+    elStatutPlanif,
+    uniq(data.map((d) => d.statut_planificateur)),
+    "Tous statuts (planif)"
+  );
+  fillSelect(
+    elStatutSuivi,
+    uniq(data.map((d) => d.statut_suivi)),
+    "Tous statuts (suivi)"
+  );
 
   // =====================================================
   // 5) Filtrage
@@ -124,7 +166,7 @@
     const from = elFrom?.value || "";
     const to = elTo?.value || "";
 
-    const filtered = data.filter(r => {
+    const filtered = data.filter((r) => {
       if (bureau && r.bureau !== bureau) return false;
       if (pilier && r.pilier !== pilier) return false;
       if (typeAct && r.type_activite !== typeAct) return false;
@@ -150,8 +192,10 @@
         r.responsable,
         r.statut_planificateur,
         r.statut_suivi,
-        r.commentaire_suivi
-      ].join(" ").toLowerCase();
+        r.commentaire_suivi,
+      ]
+        .join(" ")
+        .toLowerCase();
 
       return blob.includes(q);
     });
@@ -162,28 +206,35 @@
 
   // =====================================================
   // 6) Rendu tableau (ordre colonnes demandé)
+  //    + tri par ordre d’enregistrement (dernier en 1er)
   // =====================================================
   function render(rows) {
-    const sorted = rows.slice().sort((a, b) => {
-      // tri stable: début puis code
-      if ((a.date_debut || "") !== (b.date_debut || "")) return (a.date_debut || "").localeCompare(b.date_debut || "");
-      return (a.code_activite || "").localeCompare(b.code_activite || "");
-    });
+    const sorted = rows
+      .slice()
+      .sort((a, b) => {
+        const tb = recordTime(b);
+        const ta = recordTime(a);
+        if (tb !== ta) return tb - ta; // DESC: dernier en premier
 
-    tbody.innerHTML = sorted.map(r => {
-      const overdueClass = isOverdue(r) ? " badge--danger" : "";
-      const progressHTML = buildProgress(r.avancement_pct);
+        // tie-breaker stable
+        return (b.code_activite || "").localeCompare(a.code_activite || "");
+      });
 
-      return `
+    tbody.innerHTML = sorted
+      .map((r) => {
+        const overdueClass = isOverdue(r) ? " badge--danger" : "";
+        const progressHTML = buildProgress(r.avancement_pct);
+
+        return `
         <tr>
+          <!-- Ordre EXACT demandé -->
           <td class="col-code">${esc(r.code_activite || "")}</td>
-
           <td>${esc(r.bureau || "")}</td>
           <td>${esc(r.pilier || "")}</td>
 
-          <td class="col-title">
-            ${esc(r.titre || "")}
-          </td>
+          <!-- Titre seul (sans sous-détails) -->
+          <td class="col-title">${esc(r.titre || "")}</td>
+
           <td>${esc(r.type_activite || "")}</td>
           <td>${esc(r.objectif || "")}</td>
           <td>${esc(r.livrable_attendu || "")}</td>
@@ -205,18 +256,26 @@
           <td class="notes">${esc(r.commentaire_suivi || "")}</td>
         </tr>
       `;
-    }).join("");
+      })
+      .join("");
   }
 
   // =====================================================
   // 7) Events
   // =====================================================
   [
-    elQ, elBureau, elPilier, elTypeAct, elRisque,
-    elStatutPlanif, elStatutSuivi, elFrom, elTo
+    elQ,
+    elBureau,
+    elPilier,
+    elTypeAct,
+    elRisque,
+    elStatutPlanif,
+    elStatutSuivi,
+    elFrom,
+    elTo,
   ]
     .filter(Boolean)
-    .forEach(el => {
+    .forEach((el) => {
       el.addEventListener("input", apply);
       el.addEventListener("change", apply);
     });
