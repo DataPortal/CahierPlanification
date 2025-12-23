@@ -358,7 +358,12 @@
       "_submission_time": "2025-12-22T09:23:38",
       "_tags": [],
       "_notes": [],
-      "_validation_status": {},
+      "_validation_status": {
+        "timestamp": 1766497571,
+        "uid": "validation_status_approved",
+        "by_whom": "minsup",
+        "label": "Approved"
+      },
       "_submitted_by": null
     }
   ]
