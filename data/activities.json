@@ -222,5 +222,33 @@
     "commentaire_validation": "",
     "date_mise_a_jour": "",
     "overdue": 1
+  },
+  {
+    "id": 644812634,
+    "uuid": "4404ef94-483b-4e1e-945c-8daf6102e1d3",
+    "instance_id": "uuid:4404ef94-483b-4e1e-945c-8daf6102e1d3",
+    "start": "2026-01-08T12:05:03.334000+01:00",
+    "end": "2026-01-08T12:16:12.491000+01:00",
+    "submission_time": "2026-01-08T11:16:13",
+    "code_activite": "UNW-DRC-2026-WPS-e8f",
+    "bureau": "KINSHASA",
+    "pilier": "WPS",
+    "titre": "Tenu d'un panel",
+    "type_activite": "Panel",
+    "objectif": "Objectif",
+    "livrable_attendu": "Livrable",
+    "risque_priorite": "Élevée",
+    "date_debut": "2026-01-11",
+    "date_fin": "2026-01-15",
+    "responsable": "Reoutar",
+    "statut_planificateur": "Planifiée",
+    "statut_suivi": "Planifiée",
+    "avancement_pct": 50.0,
+    "taux_avancement_calc": null,
+    "commentaire_suivi": "",
+    "validation": "Approved",
+    "commentaire_validation": "",
+    "date_mise_a_jour": "2026-01-08T12:14:52.349000+01:00",
+    "overdue": 0
   }
 ]
